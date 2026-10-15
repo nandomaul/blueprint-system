@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# GH-001: keep generated output and local configuration out of source uploads
+node_modules/
+dist/
+preview.html
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+blueprint-checkpoints/
