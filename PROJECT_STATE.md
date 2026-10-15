@@ -1,3 +1,15 @@
+# PROJECT_STATE — SUPA-001
+
+- Project Supabase qjmwxezxtsuikywqoajj berhasil diakses melalui koneksi pengguna. URL API dan publishable key diverifikasi HTTP 200.
+- Enam tabel bp_* dan seluruh RPC/RLS/private bucket sudah dipasang pengguna. SQL awal tidak dijalankan ulang; schema tim tidak diubah.
+- Anonymous Sign-Ins sudah ON, dikonfirmasi lewat API setelah pengguna mengaktifkannya.
+- Verifikasi database save/load/rename/Trash/restore/conflict/invite/outsider/anon lulus dalam transaksi rollback. SDK/API live diverifikasi terpisah; lihat docs/SUPABASE-CONNECTION.md untuk batas pengujian.
+- src/config/supabase.ts berisi konfigurasi publik; Settings memakai default URL/key dan Buat workspace pada koneksi pertama. Konfigurasi tersimpan atau env eksplisit tetap didahulukan.
+- Tidak ada secret key, kode undangan atau sesi pengguna dalam bundle. Workspace tim pertama dibuat dari browser pengguna agar pengguna menjadi owner.
+- Panduan aktif: docs/SUPABASE-CONNECTION.md. Patch SUPA-001 hanya source; tidak otomatis push/deploy. Jalankan push-github.cjs lalu workflow Pages untuk menerbitkan frontend terbaru.
+
+## Catatan sebelumnya
+
 # PROJECT_STATE — GH-001
 
 - Pengguna meminta GitHub Pages pada repo nandomaul/blueprint-system. Penerbitan preview sekarang termasuk scope yang diminta.

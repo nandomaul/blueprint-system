@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { z } from 'zod';
+import { blueprintSupabase } from '../config/supabase.ts';
 import { errorMessage, profiles } from '../domain/model.ts';
 import type { ProfileId } from '../domain/model.ts';
 import type { Repository } from '../services/repository.ts';
 import { connectClient, createSupabaseRepository, CreatedWorkspaceSchema, rpc } from '../services/supabaseRepository.ts';
 import type { CloudConfig } from '../services/supabaseRepository.ts';
 export function Settings({profile,onProfile,config,connected,onConnect,onDevice,onBusyChange}:{profile:ProfileId;onProfile:(id:ProfileId)=>void;config:CloudConfig|null;connected:boolean;onConnect:(config:CloudConfig,repo:Repository)=>Promise<void>;onDevice:()=>Promise<void>;onBusyChange:(busy:boolean)=>void}) {
-  const [url,setUrl]=useState(config?.url??import.meta.env?.VITE_SUPABASE_URL??''),[key,setKey]=useState(config?.key??import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY??''),[workspace,setWorkspace]=useState(config?.workspaceId??import.meta.env?.VITE_BLUEPRINT_WORKSPACE_ID??'');
-  const [mode,setMode]=useState<'existing'|'create'|'join'>('existing'),[invite,setInvite]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[note,setNote]=useState('');
+  const [url,setUrl]=useState(config?.url??(import.meta.env?.VITE_SUPABASE_URL||blueprintSupabase.url)),[key,setKey]=useState(config?.key??(import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY||blueprintSupabase.publishableKey)),[workspace,setWorkspace]=useState(config?.workspaceId??import.meta.env?.VITE_BLUEPRINT_WORKSPACE_ID??'');
+  const [mode,setMode]=useState<'existing'|'create'|'join'>(config?.workspaceId?'existing':'create'),[invite,setInvite]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[note,setNote]=useState('');
   async function connect() {
     setBusy(true);onBusyChange(true);setError('');setNote('');
     try {
