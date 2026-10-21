@@ -13,7 +13,7 @@ function command(file,args,{capture=false,allowFailure=false}={}){
  return r;
 }
 const git=(args,options={})=>command('git',args,{capture:true,...options});
-function allowed(p){const parts=p.split('/');return !parts.some(v=>['node_modules','dist','.git'].includes(v)||v==='.DS_Store'||v.startsWith('.env')&&v!=='.env.example'||/\.(pem|key|log)$/i.test(v))&&(parts.length===1?(allowedFiles.has(p)||allowedRoots.has(p)):allowedRoots.has(parts[0]));}
+function allowed(p){const parts=p.split('/');return !parts.some(v=>['node_modules','dist','.git','.temp','tmp'].includes(v)||v==='.DS_Store'||v.startsWith('.env')&&v!=='.env.example'||/\.(pem|key|log)$/i.test(v))&&(parts.length===1?(allowedFiles.has(p)||allowedRoots.has(p)):allowedRoots.has(parts[0]));}
 function safeRemote(url){return /^(https:\/\/github\.com\/nandomaul\/blueprint-system(?:\.git)?\/?|git@github\.com:nandomaul\/blueprint-system(?:\.git)?)$/.test(url);}
 function walk(folder,prefix=''){
  const paths=[];

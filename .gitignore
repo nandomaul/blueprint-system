@@ -16,3 +16,8 @@ preview.html
 .DS_Store
 *.log
 blueprint-checkpoints/
+
+# MAP-003: generated QA output
+tmp/
+.ui-test-*/
+supabase/.temp/

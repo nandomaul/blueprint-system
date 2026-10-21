@@ -1,0 +1,6 @@
+import {useLayoutEffect,useRef,useState} from 'react';
+export function FitDesign({width,height,children,fit='contain',zoom,onScale}:{width:number;height:number;children:React.ReactNode;fit?:'contain'|'width';zoom?:number;onScale?:(scale:number)=>void}){
+ const ref=useRef<HTMLDivElement>(null),[scale,setScale]=useState(1),report=useRef(onScale);report.current=onScale;
+ useLayoutEffect(()=>{const update=()=>{const r=ref.current?.getBoundingClientRect();if(r&&r.width>0){const w=Math.max(100,r.width-32)/width,h=Math.max(100,r.height-32)/height;const next=zoom??Math.min(1,fit==='width'?w:Math.min(w,h));setScale(next);report.current?.(next);}};update();const frame=window.requestAnimationFrame?.(update);const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(update);if(ref.current)observer?.observe(ref.current);window.addEventListener('resize',update);return()=>{if(frame!==undefined)window.cancelAnimationFrame(frame);observer?.disconnect();window.removeEventListener('resize',update);};},[width,height,fit,zoom]);
+ return <div className="fit-design" data-fit={fit} ref={ref}><div className="fit-design-bounds" style={{width:width*scale,height:height*scale}}><div style={{transform:`scale(${scale})`,transformOrigin:'top left',width,height}}>{children}</div></div></div>;
+}

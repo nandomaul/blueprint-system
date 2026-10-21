@@ -1,3 +1,81 @@
+# Canvas Blueprint — MAP-012
+
+Settings tiga tab, bahasa Indonesia/English, profil dengan foto dan Trash, chat/catatan tim dengan mention dan badge. Jumlah halaman di bawah nama proyek; Manage project dan download diringkas; ikon dibedakan. Isi proyek/keputusan tim tetap utuh.
+
+Panduan: [docs/MAP-012.md](docs/MAP-012.md). Installer guarded menerima source MAP-011. SQL baru belum terpasang online setelah koneksi pemasangan terputus; jalankan file SQL murni `blueprint-shared-MAP-012.sql` satu kali di Supabase SQL Editor. File dapat dijalankan ulang tanpa reset. Tidak push/deploy.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-011
+
+Design UI kini canvas gambar satu halaman penuh dengan strip thumbnail, mengikuti susunan editor System UI. Upload dan area klik tetap terhubung ke layar/target yang sama. Manage Item dan Brief/Presentasi ditata ulang, wrapper home mengisi viewport, success toast dihapus. Zoom canvas lewat footer/shortcut tidak mengubah ukuran chrome; zoom browser tetap dikendalikan browser.
+
+Panduan: [docs/MAP-011.md](docs/MAP-011.md). Download installer `blueprint-map-011-patch.cjs` dan SQL murni `blueprint-shared-MAP-011.sql` ke Downloads. SQL juga ada di `supabase/manual/`. Data online sudah memakai schema MAP-010; file manual dapat dijalankan ulang tanpa reset. Tidak ada DDL online atau deploy pada revisi ini.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-010
+
+Profil tambahan, cover/pin/akses cepat, rename, Trash/restore dan pengelolaan proyek kini berbagi katalog Supabase. Design UI terhubung langsung ke layar/komponen System UI, dengan upload gambar dan preview yang tetap memakai alur yang sama. Download PDF slides, JSON dan ZIP UI+gambar; mode tangan untuk geser canvas/flow di HP. Entry ringkas dan shell satu viewport; strip halaman PPT tetap ada.
+
+Panduan lengkap: [docs/MAP-010.md](docs/MAP-010.md). Simpan blueprint-map-010-patch.cjs di Downloads, jalankan dari root Canvas dengan --stop-dev lalu npm ci/dev. Migrasi Supabase sudah diterapkan pada sesi ini; tidak perlu paste SQL. Seluruh editor/client harus memakai MAP-010. Dev saja, belum deploy dan belum QA native Mac/HP.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-009
+
+Tampilan mengikuti empat referensi clean terbaru: entry dan daftar proyek rapi, header putih satu baris, rail dan panel mengambang, serta strip halaman PPT tipis yang tetap tersedia. Akses fungsi lama dipertahankan. Nama proyek commit saat selesai; zoom manual tidak reset ketika panel dibuka; drag gambar mengikuti posisi drop; zoom flow mengikuti pusat viewport; menu proyek membuka Desain/Alur.
+
+Panduan: [docs/MAP-009.md](docs/MAP-009.md). Download `blueprint-map-009-patch.cjs` ke Downloads, jalankan dari root Canvas dengan `--stop-dev`, lalu npm ci/dev. Installer menerima MAP-005/006/007/008 yang sesuai, membuat backup luar root dan rollback terjaga. Tidak perlu SQL baru. Dev dahulu; belum deploy atau QA visual native Mac.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-008
+
+Strip halaman seperti PPT kembali menjadi bagian tetap dari workspace Desain, terpisah dari hide panel. Thumbnail mempunyai nomor/nama, halaman aktif dan auto scroll. Rail kiri berisi bahan desain, rail kanan membuka Layer / Halaman / Properti sesuai kebutuhan. Palet elemen kembali mempunyai contoh visual dan nama; Properti dikelompokkan dan mengubah data canvas yang sebenarnya. Format perangkat, Preview dan client mobile MAP-007 tetap tersedia.
+
+Panduan: [docs/MAP-008.md](docs/MAP-008.md). Simpan `blueprint-map-008-patch.cjs` di Downloads, jalankan dengan `--stop-dev` dari root Canvas, lalu npm ci/dev. Installer menerima MAP-005 / MAP-006 / MAP-007 yang sesuai. ZIP backup terpisah berisi source sebelum MAP-007, bukan data Supabase. Tidak perlu SQL baru. Belum deploy; QA visual browser native belum tersedia.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-007
+
+Panel editor kini dapat di-dock, dilepas menjadi jendela mengambang, di-resize, dilipat dan disembunyikan. Settings profil menyediakan **Kembalikan layout ke dasar**. Geometry Web / Mobile / Presentasi tersimpan terpisah; preview memiliki kontrol perangkat, bingkai HP, zoom/Fit dan presentasi yang menyesuaikan area. Client mobile memakai layout mobile dan pemilih halaman; Brief mempunyai mode baca.
+
+Panduan: [docs/MAP-007.md](docs/MAP-007.md). Pasang `blueprint-map-007-patch.cjs` dari Downloads dengan `--stop-dev`, lalu `npm ci --include=dev --bin-links=true` dan `npm run dev -- --open '/?template=ryan-002&view=design'`. Paket menerima MAP-005 / MAP-006 yang sesuai. Tidak perlu SQL baru. Semua frontend yang membaca varian layout perlu MAP-007. Belum deploy.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-006 / RYAN-002
+
+Mindmap Ryan sekarang dapat diterapkan langsung dari URL dev `http://127.0.0.1:5174/?template=ryan-002` atau tombol **Buka mindmap Ryan**. Rancangan baru berisi 18 layar dengan tiga cabang Employee / User / HR, mengikuti referensi Ryan. Proyek / History lama tetap ada. Membuka ulang memakai hasil edit tim yang sudah tersimpan. Panduan: [docs/RYAN-002.md](docs/RYAN-002.md).
+
+Pemasangan satu file: `node "$HOME/Downloads/blueprint-ryan-002-patch.cjs" --stop-dev`, lalu `npm ci --include=dev --bin-links=true` dan `npm run dev -- --open '/?template=ryan-002'`. Tidak perlu impor JSON manual atau SQL baru. Belum deploy.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-005
+
+Panduan aktif: [docs/MAP-005.md](docs/MAP-005.md). User Flow kini mendukung tarik koneksi/ujung/belokan, kolom pengelompokan, drag ikon dan quick properties. Canvas menyediakan 24 pilihan elemen/blok dengan drag/drop. Client review dibatasi database per proyek dan memperbarui versi tersimpan setiap 5 detik.
+
+Project/key Supabase tetap. Migrasi akses client sudah dipasang; frontend belum dipush/deploy. Pemasangan: `node "$HOME/Downloads/blueprint-map-005-patch.cjs" --stop-dev`, lalu npm ci/dev sesuai panduan. Semua laptop harus memakai MAP-005. Ekspor JSON sebelum bereksperimen; rollback source tidak menurunkan format elemen baru secara otomatis.
+
+## Dokumentasi sebelumnya
+
+# Canvas Blueprint — MAP-004
+
+Panduan aktif: [docs/MAP-004.md](docs/MAP-004.md). Alur baru **Semua proyek → Desain/Alur → Preview → History/Download**, ruang tim melalui undangan, merge edit independen dan pemulihan data perangkat. Kedua laptop harus bergabung ke ID workspace yang sama; N/H/R adalah nama editor, bukan akun akses.
+
+Dev: Node 24, `npm ci --include=dev --bin-links=true`, kemudian `npm run dev`. Frontend belum dipush/deploy; migrasi Supabase MAP-004 sudah terpasang. Batas pengujian browser dan panduan pemulihan/rollback tercantum pada dokumen aktif.
+
+## Catatan dokumentasi terdahulu
+
+# Canvas Blueprint — MAP-003
+
+Panduan aktif: [docs/MAP-003.md](docs/MAP-003.md). Multi-sistem, editor komponen canvas, navigasi prototype, hapus gambar, autosave dan Realtime workspace, History bernama, serta PDF/JSON handoff untuk pembangunan Lark. Dev: `npm ci --include=dev --bin-links=true`, kemudian `npm run dev` pada Node 24. Tetap dev dahulu; publikasi mengikuti instruksi pengguna.
+
+## Dokumentasi sebelumnya
+
 # GH-001 — GitHub Pages
 
 Panduan penerbitan terbaru: **[docs/GITHUB-PAGES.md](docs/GITHUB-PAGES.md)**. Repo `nandomaul/blueprint-system`; target `https://nandomaul.github.io/blueprint-system/`. Deploy dilakukan manual melalui Actions → Publish Blueprint to GitHub Pages → Run workflow setelah source dipush dan Pages disetel ke GitHub Actions.

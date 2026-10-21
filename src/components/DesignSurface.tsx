@@ -1,0 +1,29 @@
+import {t} from '../i18n.ts';
+import type {CSSProperties} from 'react';
+import type {DesignElement,MapNode,Project} from '../domain/model.ts';
+import {skinAsset} from '../domain/designLayer.ts';
+import {Icon} from './Icon.tsx';
+export function elementStyle(e:DesignElement):CSSProperties{return{position:'absolute',left:e.x,top:e.y,width:e.width,height:e.height,color:e.color,background:e.kind==='line'?'transparent':e.background,borderRadius:['ellipse','avatar'].includes(e.kind)?'50%':e.kind==='badge'?100:e.radius,fontSize:e.fontSize,overflow:'hidden',whiteSpace:'pre-wrap',boxSizing:'border-box',padding:['heading','text','icon','ellipse','rectangle','line','progress'].includes(e.kind)?0:12,fontWeight:e.kind==='heading'?650:400,border:e.kind==='input'?'1px solid #cdd0d5':undefined,lineHeight:1.4};}
+export function ElementContent({element:e,project,visual=false,nodeId}:{element:DesignElement;project:Project;visual?:boolean;nodeId?:string}){
+ const skin=visual&&nodeId?skinAsset(project,nodeId,e.id):undefined;if(skin)return <img src={skin.data} alt={e.text} style={{width:'100%',height:'100%',objectFit:'fill'}}/>;
+ if(e.kind==='image'){const a=project.assets.find(a=>a.id===e.assetId);return a?<img src={a.data} alt={e.text||a.name} style={{width:'100%',height:'100%',objectFit:'contain'}}/>:<span className="missing-image">{t("Pilih gambar di Upload")}</span>;}
+ if(e.kind==='icon')return <span className="design-icon"><Icon name={e.icon??'users'} size={Math.max(20,Math.min(e.width,e.height)-8)}/></span>;
+ if(e.kind==='line')return <span className="design-line" style={{background:e.color}}/>;
+ if(e.kind==='ellipse'||e.kind==='rectangle')return <>{e.text}</>;
+ if(e.kind==='avatar'||e.kind==='badge')return <span className="design-centered">{e.text}</span>;
+ if(e.kind==='progress')return <div className="design-progress"><span>{e.text} · {e.value??50}%</span><div style={{background:e.background}}><i style={{width:(e.value??50)+'%',background:e.color}}/></div></div>;
+ if(e.kind==='checkbox')return <span className="design-check-example"><span>□</span>{e.text}</span>;
+ if(e.kind==='select')return <span className="design-select-example">{e.text}<span>▾</span></span>;
+ if(e.kind==='textarea')return <span>{e.text}<small className="design-field-note">{t("Catatan…")}</small></span>;
+ if(e.kind==='table')return <div className="design-table">{e.text.split('\n').map((row,i)=><div key={i} style={{display:'flex',borderBottom:'1px solid #d7d9de',fontWeight:i===0?600:400,padding:'8px 0'}}>{row.split('|').map((cell,j)=><span key={j} style={{flex:1,minWidth:0}}>{cell.trim()}</span>)}</div>)}</div>;
+ return <>{e.text}</>;
+}
+export function DesignSurface({project,node,onNavigate}:{project:Project;node:MapNode;onNavigate?:(id:string)=>void}){
+ const d=node.design,frame=skinAsset(project,node.id,null);if(!d)return <p>{t("Desain belum disiapkan.")}</p>;
+ return <div className="design-surface" data-testid="design-preview" style={{position:'relative',width:d.width,height:d.height,background:d.background,overflow:'hidden',flexShrink:0}}>{frame&&<img src={frame.data} alt={node.title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'fill'}}/>}{d.elements.filter(e=>!frame||e.kind==='button'||['input','textarea','select','checkbox'].includes(e.kind)).map(e=>{
+  const skin=!frame?skinAsset(project,node.id,e.id):undefined,field=['input','textarea','select','checkbox'].includes(e.kind),covered=Boolean(frame||skin),style={...elementStyle(e),...(skin?{padding:0}:{}),...(frame?{padding:0,background:'transparent',border:0}:{} )};
+  if(e.kind==='button')return <button type="button" key={e.id} style={{...style,...(frame?{color:'transparent'}:{})}} className="preview-design-button" onClick={()=>onNavigate?.(e.target)} aria-label={e.text} title={e.target?`Buka ${project.nodes.find(n=>n.id===e.target)?.title}`:t("Tujuan belum diatur")}>{!frame&&<ElementContent element={e} project={project} visual nodeId={node.id}/>}</button>;
+  if(field)return <label key={e.id} style={style} className={'prototype-field '+e.kind+(covered?' skinned-field':'')}>{skin&&<img src={skin.data} alt={e.text} className="field-skin"/>}{e.kind==='checkbox'?<><input type="checkbox" aria-label={e.text} defaultChecked={(e.value??0)>0}/><span>{e.text}</span></>:<><span className={covered?'sr-only':''}>{e.text}</span>{e.kind==='select'?<select aria-label={e.text} defaultValue=""><option value="">{covered?'':t("Pilih…")}</option>{(e.options??['Pilihan 1','Pilihan 2']).map((v,i)=><option key={i}>{v}</option>)}</select>:e.kind==='textarea'?<textarea aria-label={e.text} placeholder={covered?'':t("Data uji sementara")}/>:<input aria-label={e.text} placeholder={covered?'':t("Data uji sementara")}/>}</>}</label>;
+  return <div key={e.id} style={style}><ElementContent element={e} project={project} visual nodeId={node.id}/></div>;
+ })}</div>;
+}

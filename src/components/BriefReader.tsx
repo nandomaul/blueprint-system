@@ -1,0 +1,9 @@
+import {t} from '../i18n.ts';
+import {useState} from 'react';
+import type {Project} from '../domain/model.ts';
+export const briefSections=[['problem','Masalah & tujuan'],['audience','Pengguna & akses'],['scope','Ruang lingkup'],['decisions','Keputusan & sumber'],['assumptions','Asumsi'],['dataModel','Struktur data'],['integrations','Integrasi'],['acceptance','Kriteria & tahapan'],['questions','Keputusan HR']] as const;
+export function BriefText({text}:{text:string}){return <>{text.split(/\n\s*\n/).filter(Boolean).map((paragraph,i)=>{const lines=paragraph.split('\n');return <div className="brief-text-block" key={i}>{lines.map((line,j)=>{if(/^[-•]\s|^\d+[.)]\s/.test(line))return <p className="brief-list-line" key={j}>{line.replace(/^[-•]\s/,'• ' )}</p>;const colon=line.indexOf(':');return <p key={j}>{colon>0&&colon<90?<><strong>{line.slice(0,colon+1)}</strong>{line.slice(colon+1)}</>:line}</p>;})}</div>;})}</>;}
+export function BriefReader({project}:{project:Project}){
+ const [section,setSection]=useState<typeof briefSections[number][0]>('problem');
+ return <section className="brief-reader"><nav aria-label={t("Bagian brief")}><strong>{t("Brief sistem")}</strong>{briefSections.map(([key,label],i)=><button key={key} className={section===key?'active':''} onClick={()=>setSection(key)}><span>{String(i+1).padStart(2,'0')}</span>{t(label)}</button>)}</nav><article><header><span className="eyebrow">{t("PERSONNEL / BRIEF")}</span><h1>{project.title}</h1><p>{project.description}</p><select aria-label={t("Bagian brief")} value={section} onChange={e=>setSection(e.target.value as typeof section)}>{briefSections.map(([key,label])=><option key={key} value={key}>{t(label)}</option>)}</select></header><h2>{t(briefSections.find(([key])=>key===section)![1])}</h2><BriefText text={project.brief[section]||t('Bagian ini belum diisi.')}/></article></section>;
+}

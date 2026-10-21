@@ -1,0 +1,17 @@
+import {useEffect,useRef,useState} from 'react';
+import {mergeMessages} from '../domain/chat.ts';
+import type {ChatDraft,ChatMessage} from '../domain/chat.ts';
+import type {ProfileId} from '../domain/model.ts';
+import type {ChatRepository} from '../services/workspace.ts';
+export function useTeamChat(repository:ChatRepository|undefined,profile:ProfileId){
+ const [messages,setMessages]=useState<ChatMessage[]>([]),[unread,setUnread]=useState(0),[hasMore,setHasMore]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(false),[sending,setSending]=useState(false),[epoch,setEpoch]=useState(0);
+ const newest=useRef('0'),oldest=useRef('0'),more=useRef(false),cursor=useRef('0'),generation=useRef(0),refreshRef=useRef<()=>Promise<void>>(async()=>{}),pending=useRef(false),refreshing=useRef(false);
+ useEffect(()=>{const g=++generation.current;let disposed=false;setMessages([]);setUnread(0);setError('');setHasMore(false);cursor.current='0';newest.current='0';oldest.current='0';more.current=false;refreshing.current=false;pending.current=false;
+  async function refresh(){if(disposed||!repository)return;if(refreshing.current){pending.current=true;return;}refreshing.current=true;try{const page=await repository.page(profile);let batch=page.messages,extra=page;while(newest.current!=='0'&&extra.hasMore&&batch.length&&BigInt(batch[0].id)>BigInt(newest.current)){extra=await repository.page(profile,batch[0].id);if(disposed||g!==generation.current)return;batch=mergeMessages(extra.messages,batch);}if(disposed||g!==generation.current)return;cursor.current=BigInt(page.lastRead)>BigInt(cursor.current)?page.lastRead:cursor.current;if(oldest.current==='0'){oldest.current=batch[0]?.id??'0';more.current=extra.hasMore;}newest.current=batch.at(-1)?.id??newest.current;setMessages(old=>mergeMessages(old,batch));setHasMore(more.current);setUnread(page.unread);setError('');}catch(e){if(!disposed)setError(e instanceof Error?e.message:String(e));}finally{if(!disposed){refreshing.current=false;if(pending.current){pending.current=false;void refresh();}}}}
+  refreshRef.current=refresh;void refresh();const stop=repository?.watch(()=>void refresh());return()=>{disposed=true;generation.current++;stop?.();};
+ },[repository,profile,epoch]);
+ async function older(){if(!repository||loading||!messages.length)return;const g=generation.current;setLoading(true);try{const page=await repository.page(profile,messages[0].id);if(g!==generation.current)return;setMessages(old=>mergeMessages(old,page.messages));oldest.current=page.messages[0]?.id??oldest.current;more.current=page.hasMore;setHasMore(page.hasMore);setError('');}catch(e){if(g===generation.current)setError(String(e));}finally{setLoading(false);}}
+ async function send(draft:ChatDraft){if(!repository||sending)return false;const g=generation.current;setSending(true);try{await repository.send(profile,draft);if(g!==generation.current)return false;await refreshRef.current();return true;}catch(e){if(g===generation.current)setError(e instanceof Error?e.message:String(e));return false;}finally{setSending(false);}}
+ async function read(id:string){if(!repository||BigInt(id)<=BigInt(cursor.current))return;const g=generation.current;try{const saved=await repository.read(profile,id);if(g!==generation.current)return;cursor.current=saved;await refreshRef.current();}catch(e){if(g===generation.current)setError(String(e));}}
+ return{messages,unread,hasMore,error,loading,sending,older,send,read,retry:()=>setEpoch(e=>e+1)};
+}

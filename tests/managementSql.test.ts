@@ -1,0 +1,27 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFile,readdir} from 'node:fs/promises';
+import {newProject} from '../src/domain/designer.ts';
+const owner='11111111-1111-4111-8111-111111111111',viewer='22222222-2222-4222-8222-222222222222',outsider='33333333-3333-4333-8333-333333333333';
+test('SQL MAP-010: two members share profiles/metadata; bulk atomic Trash, revocation, write guard, RLS and restore',async()=>{
+ const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('${owner}'),('${viewer}'),('${outsider}');create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert on storage.objects to authenticated;`);
+ const dir=new URL('../supabase/migrations/',import.meta.url);for(const f of (await readdir(dir)).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile(new URL(f,dir),'utf8'));
+
+ const auth=async(id:string)=>{await db.exec(`reset role;select set_config('request.jwt.claim.sub','${id}',false);set role authenticated`);};await auth(owner);
+ const w=(await db.query<{r:{workspaceId:string}}>('select bp_create_workspace($1) r',['Management'])).rows[0].r.workspaceId,code=(await db.query<{r:string}>('select bp_invite_code($1) r',[w])).rows[0].r;
+ const catalog=async()=>(await db.query<{r:{profiles:{id:string;name:string;deletedAt:string|null}[];projects:{id:string;trashedAt:string|null;pinned:boolean;shortcut:boolean}[]}}>('select bp_workspace_catalog($1) r',[w])).rows[0].r;
+ assert.equal((await catalog()).profiles.length,3);const profile=async(action:string,id:string|null,name:string|null=null)=>(await db.query<{r:{id:string}}>('select bp_editor_profile($1,$2,$3,$4) r',[w,action,id,name])).rows[0].r;
+ const custom=await profile('create',null,'Client');await profile('trash','nando');await profile('restore','nando');await assert.rejects(()=>profile('create',null,' client '),/unique/);
+ const p=newProject('A'),q=newProject('B');const write=async(v:typeof p,token:string|null=null)=>(await db.query<{r:{token:string}}>('select bp_write_document($1,$2,$3,$4::jsonb,$5,$6) r',[w,v.id,token,JSON.stringify(v),custom.id,'Custom author'])).rows[0].r;const saved=await write(p);await write(q);
+ const manage=(action:string,ids:string[],value:string|null=null,pass:string|null=null)=>db.query('select bp_manage_documents($1,$2,$3::text[],$4,$5,$6)',[w,action,ids,value,pass,'nando']);
+ const review=(await db.query<{r:{code:string}}>('select bp_review_link($1,$2,$3) r',[w,p.id,'create'])).rows[0].r.code;
+ await auth(viewer);await db.query('select bp_join_workspace($1)',[code]);assert.equal((await catalog()).profiles.some(x=>x.id===custom.id),true);await manage('pin',[p.id]);await manage('hideShortcut',[p.id]);await manage('rename',[q.id],'Renamed by second member');await auth(owner);assert.equal((await catalog()).projects[0].pinned,true);assert.equal((await catalog()).projects[0].shortcut,false);assert.equal((await db.query<{title:string}>('select title from bp_documents where project_id=$1',[q.id])).rows[0].title,'Renamed by second member');
+ await assert.rejects(()=>manage('trash',[p.id],null,'wrong'),/Passcode/);await assert.rejects(()=>manage('trash',[p.id,'missing'],null,'systemdelete'),/tidak ditemukan/);assert.equal((await catalog()).projects.find(x=>x.id===p.id)!.trashedAt,null);
+ await manage('trash',[p.id,q.id],null,'systemdelete');assert.equal((await catalog()).projects.filter(x=>x.trashedAt).length,2);await assert.rejects(()=>db.query('select bp_review_link($1,$2,$3)',[w,p.id,'create']),/Trash/);await assert.rejects(()=>db.query('select bp_review_link($1,$2,$3)',[w,p.id,'rotate']),/Trash/);assert.equal((await db.query<{r:null}>('select bp_review_link($1,$2,$3) r',[w,p.id,'get'])).rows[0].r,null);await assert.rejects(()=>write(p,saved.token),/Trash/);await assert.rejects(()=>db.query('select bp_read_review($1,null)',[review]),/ditolak|aktif/);assert.ok((await db.query<{revoked_at:string}>('select revoked_at from bp_review_links')).rows[0].revoked_at);
+ await manage('restore',[p.id,q.id]);await write(p,saved.token);await profile('trash',custom.id);await assert.rejects(()=>write(p),/Profil/);await profile('restore',custom.id);
+ await auth(outsider);assert.equal((await db.query('select * from bp_editor_profiles')).rows.length,0);await assert.rejects(()=>catalog(),/Akses/);await assert.rejects(()=>manage('pin',[p.id]),/Akses/);await assert.rejects(()=>profile('create',null,'Hack'),/Akses/);await db.exec('reset role;set role anon');await assert.rejects(()=>catalog(),/permission denied/);
+ await db.exec('reset role');const pub=(await db.query<{tablename:string}>("select tablename from pg_publication_tables where pubname='supabase_realtime'")).rows;assert.ok(pub.some(x=>x.tablename==='bp_editor_profiles'));assert.ok(pub.some(x=>x.tablename==='bp_document_settings'));
+ }finally{await db.close();}
+});

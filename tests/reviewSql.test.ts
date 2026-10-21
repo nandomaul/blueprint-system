@@ -1,0 +1,26 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFile,readdir} from 'node:fs/promises';
+import {newProject} from '../src/domain/designer.ts';
+const owner='11111111-1111-4111-8111-111111111111',viewer='22222222-2222-4222-8222-222222222222',outsider='33333333-3333-4333-8333-333333333333';
+test('client SQL: one project read-only, private assets, live saved changes, rotate/revoke/expiry and no editor escalation',async()=>{
+ const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('${owner}'),('${viewer}'),('${outsider}');create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert on storage.objects to authenticated;`);
+ const dir=new URL('../supabase/migrations/',import.meta.url);for(const f of (await readdir(dir)).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile(new URL(f,dir),'utf8'));
+ const auth=async(id:string)=>{await db.exec(`reset role;select set_config('request.jwt.claim.sub','${id}',false);set role authenticated`);};await auth(owner);
+ const w=(await db.query<{r:{workspaceId:string}}>('select bp_create_workspace($1) r',['Review005'])).rows[0].r.workspaceId,p=newProject('Client project'),secret=newProject('Another private project'),sha='a'.repeat(64),path=w+'/'+sha+'.png',other=w+'/'+'b'.repeat(64)+'.png';
+ await db.exec('reset role');await db.query("insert into storage.objects values('blueprint-designs',$1),('blueprint-designs',$2)",[path,other]);await auth(owner);await db.query('select bp_register_asset($1,$2,$3,$4)',[w,'a1',path,sha]);const payload={...p,assets:[{id:'a1',nodeId:p.nodes[0].id,name:'image.png',mime:'image/png',size:68,storagePath:path,sha256:sha,version:1,createdAt:new Date().toISOString()}]};
+ const write=async(v:unknown,id:string,token:string|null=null)=>(await db.query<{r:{token:string}}>('select bp_write_document($1,$2,$3,$4::jsonb,$5,$6) r',[w,id,token,JSON.stringify(v),'nando','Review snapshot'])).rows[0].r;
+ const saved=await write(payload,p.id);await write(secret,secret.id);const link=async(action:string)=>(await db.query<{r:{code:string}|null}>('select bp_review_link($1,$2,$3) r',[w,p.id,action])).rows[0].r;
+ const code=(await link('create'))!.code;assert.equal((await link('create'))!.code,code);
+ await auth(viewer);assert.equal((await db.query('select * from bp_documents')).rows.length,0);await db.query('select bp_join_review($1)',[code]);assert.equal((await db.query('select * from bp_documents')).rows.length,1);assert.equal((await db.query('select * from bp_document_versions')).rows.length,0);assert.equal((await db.query('select * from bp_members')).rows.length,0);assert.deepEqual((await db.query<{name:string}>('select name from storage.objects')).rows.map(r=>r.name),[path]);
+ await assert.rejects(()=>write(payload,p.id,saved.token),/Akses/);await assert.rejects(()=>link('rotate'),/Akses editor/);await assert.rejects(()=>db.query('update bp_documents set title=$1',['Hacked']),/permission denied/);
+ const read=async(token:string|null=null)=>(await db.query<{r:{unchanged:boolean|null;payload:typeof p;token:string}}>('select bp_read_review($1,$2) r',[code,token])).rows[0].r;assert.equal((await read()).payload.title,p.title);assert.equal((await read(saved.token)).unchanged,true);
+ await auth(owner);await write({...payload,title:'Revised by editor'},p.id,saved.token);await auth(viewer);assert.equal((await read(saved.token)).payload.title,'Revised by editor');
+ await auth(outsider);assert.equal((await db.query('select * from bp_documents')).rows.length,0);await assert.rejects(()=>read(),/akses ditolak/);
+ await auth(owner);const next=(await link('rotate'))!.code;assert.notEqual(next,code);await auth(viewer);assert.equal((await db.query('select * from bp_documents')).rows.length,0);assert.equal((await db.query('select * from storage.objects')).rows.length,0);await assert.rejects(()=>db.query('select bp_join_review($1)',[code]),/tidak aktif/);await db.query('select bp_join_review($1)',[next]);assert.equal((await db.query('select * from bp_documents')).rows.length,1);
+ await auth(owner);await link('revoke');await auth(viewer);assert.equal((await db.query('select * from bp_documents')).rows.length,0);await auth(owner);await link('create');await db.exec('reset role');await db.query("update bp_review_links set expires_at=now()-interval '1 day'");await auth(viewer);assert.equal((await db.query('select * from bp_documents')).rows.length,0);
+ await db.exec('reset role;set role anon');await assert.rejects(()=>db.query('select bp_join_review($1)',[next]),/permission denied/);
+ }finally{await db.close();}
+});

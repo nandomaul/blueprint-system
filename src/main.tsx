@@ -1,5 +1,10 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import './styles/app.css';
+import './styles/workspace.css';
+import './styles/clean.css';
+import './styles/management.css';
+import './styles/designWorkspace.css';
+import './styles/team.css';
 const element=document.getElementById('root');if(!element)throw new Error('Root tidak ditemukan.');
 createRoot(element).render(<App/>);

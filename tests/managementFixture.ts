@@ -1,0 +1,5 @@
+import {newProject,newPage,element,editDesign} from '../src/domain/designer.ts';
+import {validateProject} from '../src/domain/model.ts';
+import {enableDesign,assignDesign} from '../src/domain/designLayer.ts';
+const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6yZkAAAAASUVORK5CYII=';
+export function fixture(){let p=newProject('Fixture');const b=newPage(2);p=validateProject({...p,nodes:[...p.nodes,b],presentation:[...p.presentation,b.id],flowColumns:[{id:'group',title:'Group',x:0,y:0,width:400,height:400,color:'#eeeeee'}]});p=editDesign(p,p.nodes[0].id,{...p.nodes[0].design!,elements:[{...element('button'),id:'go',target:b.id},{...element('table'),id:'table',y:180}]});p=validateProject({...p,assets:[{id:'a1',nodeId:p.nodes[0].id,name:'art.png',mime:'image/png',size:68,data:png,version:1,createdAt:new Date().toISOString()}]});p={...p,edges:p.edges.map(e=>({...e,bend:{x:470,y:220},sourceSide:'bottom' as const,targetSide:'top' as const}))};return assignDesign(enableDesign(p),p.nodes[0].id,'go','a1');}

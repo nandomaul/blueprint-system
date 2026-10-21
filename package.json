@@ -10,24 +10,29 @@
     "dev": "vite --host 127.0.0.1 --port 5174 --strictPort",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
-    "test": "node --test tests/*.test.ts",
+    "test": "node --test tests/*.test.ts && node scripts/test-ui.mjs",
     "build": "npm run typecheck && vite build && node scripts/portable.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
-    "checkpoint": "node scripts/checkpoint.mjs"
+    "checkpoint": "node scripts/checkpoint.mjs",
+    "deploy": "npm run build"
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "1.1.1",
     "@supabase/supabase-js": "2.117.3",
+    "pdf-lib": "1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "3.25.76"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.10",
+    "@types/jsdom": "27.0.0",
     "@types/node": "24.10.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "eslint": "9.39.4",
     "fake-indexeddb": "6.2.4",
+    "jsdom": "30.1.2",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2",
     "vite": "8.2.1"

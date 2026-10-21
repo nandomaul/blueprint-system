@@ -1,0 +1,23 @@
+import {t} from '../i18n.ts';
+import {useEffect,useRef,useState} from 'react';
+import {profileName} from '../domain/model.ts';
+import type {LayoutMode,ProfileId} from '../domain/model.ts';
+import {Icon} from './Icon.tsx';
+import {ToolButton} from './ToolButton.tsx';
+
+export function EditorChrome({title,teamName,profile,mode,device,saveState,status,busy,canUndo,canRedo,onTitle,onHome,onUndo,onRedo,onHistory,onMode,onDevice,onRyan,onBrief,onCheckpoint,onDownload,onPreview,onPresent,onShare,onProfile,designEnabled=false,onManage,onChat,unread=0,avatar}:{onChat?:()=>void;unread?:number;avatar?:string|null;designEnabled?:boolean;onManage?:()=>void;title:string;teamName:string;profile:ProfileId;mode:'canvas'|'flow'|'assets';device:LayoutMode;saveState:string;status:string;busy:boolean;canUndo:boolean;canRedo:boolean;onTitle:(value:string)=>void;onHome:()=>void;onUndo:()=>void;onRedo:()=>void;onHistory:()=>void;onMode:(value:'canvas'|'flow'|'assets')=>void;onDevice:(value:LayoutMode)=>void;onRyan:()=>void;onBrief:()=>void;onCheckpoint:()=>void;onDownload:()=>void;onPreview:()=>void;onPresent:()=>void;onShare:()=>void;onProfile:()=>void}){
+ const [draft,setDraft]=useState(title),editing=useRef(false),cancel=useRef(false);
+ useEffect(()=>{if(!editing.current)setDraft(title);},[title]);
+ function commit(){editing.current=false;if(cancel.current){cancel.current=false;setDraft(title);return;}const next=draft.trim();if(next&&next!==title)onTitle(next);else setDraft(title);}
+ return <header className="editor-topbar" inert={busy||undefined}>
+  <div className="chrome-group chrome-project"><ToolButton label={t("Kembali ke semua proyek")} icon="grid" onClick={onHome}/><div className="project-name-control"><input className="project-title-input" aria-label={t("Nama proyek")} value={draft} maxLength={100} onFocus={()=>{editing.current=true;}} onChange={e=>setDraft(e.target.value)} onBlur={commit} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape'){cancel.current=true;e.currentTarget.blur();}}}/><span className={'sync-dot '+saveState} title={(teamName)+t(" · ")+(status)} role="status" aria-label={status}/><span className="sr-only">{status}</span></div></div>
+  <span className="chrome-divider"/>
+  <div className="chrome-group"><ToolButton label={t("Undo")} icon="undo" disabled={!canUndo} onClick={onUndo}/><ToolButton label={t("Redo")} icon="redo" disabled={!canRedo} onClick={onRedo}/><ToolButton label={t("History")} icon="history" onClick={onHistory}/></div>
+  <span className="chrome-divider"/>
+  <nav className="chrome-group mode-switch" aria-label={t("Tampilan workspace")}><ToolButton label={t("System UI")} icon="edit" active={mode==='canvas'} onClick={()=>onMode('canvas')}/><ToolButton label={t("Alur")} icon="map" active={mode==='flow'} onClick={()=>onMode('flow')}/><ToolButton label={t("Design UI")} icon="image" className={!designEnabled?'design-not-created':''} active={mode==='assets'} onClick={()=>onMode('assets')}/></nav>
+  {mode==='canvas'&&<label className="device-picker"><Icon name={device==='mobile'?'phone':device==='presentation'?'presentation':'monitor'} size={17}/><select aria-label={t("Format halaman")} title={t("Format layout halaman aktif")} value={device} onChange={e=>onDevice(e.target.value as LayoutMode)}><option value="web">{t("Web")}</option><option value="mobile">{t("Mobile")}</option><option value="presentation">{t("Presentasi")}</option></select></label>}
+  <div className="chrome-group chrome-document"><ToolButton label={t("Buka mindmap Ryan")} icon="map" onClick={onRyan}/><ToolButton label={t("Brief & data")} icon="book" onClick={onBrief}/><ToolButton label={t("Simpan versi")} icon="save" onClick={onCheckpoint}/><ToolButton label={t("Download")} icon="download" onClick={onDownload}/>{onManage&&<ToolButton label={t("Manage item")} icon="manage" onClick={onManage}/>}{onChat&&<button className="icon-button chat-toggle" aria-label={t("Chat tim")} title={t("Chat tim")} onClick={onChat}><Icon name="chat"/>{unread>0&&<span className="unread-badge">{unread>99?'99+':unread}</span>}</button>}</div>
+  <div className="topbar-spacer"/>
+  <div className="chrome-group"><ToolButton label={t("Preview")} icon="preview" onClick={onPreview}/><ToolButton label={t("Presentasi")} icon="monitor" onClick={onPresent}/><ToolButton label={t("Bagikan")} icon="users" onClick={onShare}/><button className="editor-profile" aria-label={t("Profil dan ruang tim")} title={(profileName(profile))+t(" · ")+(teamName)} onClick={onProfile}>{avatar?<img src={avatar} alt=""/>:profileName(profile)[0].toUpperCase()}</button></div>
+ </header>;
+}

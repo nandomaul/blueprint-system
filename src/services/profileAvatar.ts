@@ -1,0 +1,6 @@
+export async function readProfileAvatar(file:File):Promise<string>{
+ if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>4*1024*1024)throw new Error('PNG/JPG/WebP, maksimal 4 MB.');
+ const bytes=new Uint8Array(await file.arrayBuffer()),png=bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71,jpg=bytes[0]===255&&bytes[1]===216&&bytes[2]===255,webp=new TextDecoder().decode(bytes.slice(0,4))==='RIFF'&&new TextDecoder().decode(bytes.slice(8,12))==='WEBP';
+ if(!(file.type==='image/png'?png:file.type==='image/jpeg'?jpg:webp))throw new Error('Isi gambar tidak sesuai format.');
+ const url=URL.createObjectURL(file);try{const img=new Image();img.src=url;await img.decode();if(img.naturalWidth*img.naturalHeight>40000000)throw new Error('Gambar maksimal 40 megapiksel.');const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;const c=canvas.getContext('2d');if(!c)throw new Error('Browser tidak mendukung foto profil.');const side=Math.min(img.naturalWidth,img.naturalHeight);c.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,128,128);const data=canvas.toDataURL('image/webp',.82);if(data.length>100000)throw new Error('Foto profil terlalu besar.');return data;}finally{URL.revokeObjectURL(url);}
+}

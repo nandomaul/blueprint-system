@@ -1,0 +1,11 @@
+import {z} from 'zod';
+import {ProfileSchema,profiles} from './model.ts';
+export const EditorProfileSchema=z.object({id:ProfileSchema,name:z.string().trim().min(1).max(60),avatar:z.string().max(100000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/).nullable().optional(),base:z.boolean(),deletedAt:z.string().nullable()}).strict();
+export type EditorProfile=z.infer<typeof EditorProfileSchema>;
+export const ProjectSettingsSchema=z.object({id:z.string(),coverAssetId:z.string().nullable(),pinned:z.boolean(),shortcut:z.boolean(),trashedAt:z.string().nullable()}).strict();
+export const CatalogSchema=z.object({profiles:z.array(EditorProfileSchema),projects:z.array(ProjectSettingsSchema)}).strict();
+export type Catalog=z.infer<typeof CatalogSchema>;
+export type ProjectAction='rename'|'trash'|'restore'|'cover'|'pin'|'unpin'|'shortcut'|'hideShortcut';
+export type ProfileAction='create'|'trash'|'restore';
+export const emptyCatalog=():Catalog=>({profiles:profiles.map(p=>({id:p.id,name:p.name,base:true,deletedAt:null})),projects:[]});
+export const defaultProjectSettings=(id:string)=>({id,coverAssetId:null,pinned:false,shortcut:true,trashedAt:null});
