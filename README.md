@@ -1,3 +1,13 @@
+# Canvas Blueprint — MAP-015
+
+Login username/password Supabase Auth. Pemilik membuat akun editor melalui Pengaturan → Akun; profil Nando/Hadist/Ryan tetap tersedia untuk dihubungkan. Login diingat browser, Log out tersedia. Share anonim hanya satu proyek (lihat saja). Avatar aktif menampilkan orang lain, klik avatar membuka lokasi/aktivitas. Flow menutup opsi ketika klik di luar dan memiliki shortcut System UI/Design UI dengan ID halaman yang sama.
+
+**Status21Oct:** Edge Function `blueprint-accounts` v1 ACTIVE dan penolakan non-owner403 teruji langsung. SQL MAP-015 belum terpasang: dua percobaan migration gagal `Invalid or expired requestState`, pemeriksaan baca mengonfirmasi tabel akun belum ada. Jalankan [supabase/manual/blueprint-shared-MAP-015.sql](supabase/manual/blueprint-shared-MAP-015.sql) sekali lewat SQL Editor sebelum login/aktivasi. Tidak perlu menyalin file CJS ke SQL Editor. Proyek/riwayat lama dipertahankan.
+
+Panduan setup pertama, lokasi source, pengujian, rollback dan publish: [docs/MAP-015.md](docs/MAP-015.md). Gunakan browser/origin yang masih menyimpan sesi pemilik ruang asli untuk mengaktifkan akun pertama. Akun/password default tidak dibuat. Login baru hanya tersedia setelah pemilik menyiapkan akun. Klaim akses tanpa password MAP-014 sudah digantikan model ini.
+
+## Catatan versi sebelumnya
+
 # Canvas Blueprint — MAP-014
 
 Kolaborasi: avatar maksimal3 +N di kiri Preview, daftar lokasi/aktivitas editor, chat di kelompok kanan, klik background melepas koneksi/pilihan alur, geser2jari untuk pan, Trash langsung tanpa mengetik passcode, menu proyek ringkas yang tidak terpotong container.

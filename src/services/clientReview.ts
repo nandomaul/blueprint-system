@@ -9,7 +9,7 @@ export const ReviewLinkSchema=z.object({code:z.string().uuid(),expiresAt:z.strin
 export type ReviewLink=z.infer<typeof ReviewLinkSchema>;
 export type ReviewRecord={project:Project;token:string;updatedAt:string;expiresAt:string};
 export interface ReviewReader{load():Promise<ReviewRecord>;close():Promise<void>}
-export function reviewUrl(code:string,location:{origin:string;pathname:string}){return location.origin+location.pathname+'#review='+z.string().uuid().parse(code);}
+export function reviewUrl(code:string,location:{origin:string;pathname:string}){return (['127.0.0.1','localhost'].includes(new URL(location.origin).hostname)?'https://nandomaul.github.io/blueprint-system/':location.origin+location.pathname)+'#review='+z.string().uuid().parse(code);}
 export async function manageReview(client:SupabaseClient,workspaceId:string,projectId:string,action:'get'|'create'|'rotate'|'revoke'){const data=await rpc(client,'bp_review_link',{p_workspace_id:workspaceId,p_project_id:projectId,p_action:action});return data===null?null:ReviewLinkSchema.parse(data);}
 export function createReviewReader(client:SupabaseClient,code:string):ReviewReader{
  z.string().uuid().parse(code);let record:ReviewRecord|null=null,codec:ReturnType<typeof assetCodec>|null=null;
