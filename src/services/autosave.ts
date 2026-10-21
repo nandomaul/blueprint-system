@@ -15,7 +15,7 @@ export class Autosaver {
   get base(){return this.persisted;}
   get hasConflict(){return this.state==='conflict';}
   private notify(state:SaveState,error?:Error){this.state=state;this.onState(state,error);}
-  private keep(value:DraftRecord|null){this.journalWork=this.journalWork.catch(()=>{}).then(()=>this.journal(value));return this.journalWork;}
+  private keep(value:DraftRecord|null){this.journalWork=this.journalWork.catch(()=>{}).then(()=>this.journal(value));return this.journalWork.catch(e=>{if(this.repo.kind!=='supabase')throw e;/* A browser recovery copy must never block the canonical cloud write. */});}
   async persistDraft(){if(this.dirty)await this.keep({key:this.repo.scope+'/'+this.current.id,baseToken:this.token,project:this.current,baseProject:this.persisted});}
   edit(project:Project){if(this.stopped)return;this.current=project;void this.persistDraft().catch(e=>this.notify('error',e instanceof Error?e:new Error(String(e))));if(this.state!=='conflict'){this.error=null;this.notify('editing');}clearTimeout(this.timer);this.timer=setTimeout(()=>{void this.flush().catch(()=>{});},this.delay);}
   async flush():Promise<void>{

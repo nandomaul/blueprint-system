@@ -7,6 +7,7 @@ import {App} from '../src/App.tsx';
 import {createLocalWorkspace} from '../src/services/localWorkspace.ts';
 import {runManagementUiTests} from './managementUiHarness.tsx';
 import {runTeamUiTests} from './teamUiHarness.tsx';
+import {runSharedWorkspaceUiTests} from './sharedWorkspaceUiHarness.tsx';
 import {runCleanUiTests} from './cleanUiHarness.tsx';
 import {runWorkspaceUiTests} from './workspaceUiHarness.tsx';
 import {runRyanUiTests} from './ryanUiHarness.tsx';
@@ -46,5 +47,5 @@ export async function runUiTests(downloads:()=>number){
  await act(async()=>root.unmount());const reopened=createLocalWorkspace(window.indexedDB,'ui004');root=createRoot(document.getElementById('test-root')!);await act(async()=>root.render(<App initialRepository={reopened}/>));await until(()=>Boolean(document.querySelector('[aria-label="Buka proyek Lark Test System"]')));await click('Buka proyek Lark Test System');await until(()=>Boolean(document.querySelector('.canvas-editor')));await click('Buka halaman Approval');assert.ok(document.querySelector('.artboard')?.textContent?.includes('Portal Lark nyata'));await act(async()=>root.unmount());
  const reviewProject=newProject('Client workspace');let current=reviewProject,denied=false;const reader={async load(){if(denied)throw new Error('Tautan review tidak aktif');return{project:current,token:crypto.randomUUID(),updatedAt:current.updatedAt,expiresAt:'2026-11-19'};},async close(){}};
  root=createRoot(document.getElementById('test-root')!);await act(async()=>root.render(<ClientReview code="11111111-1111-4111-8111-111111111111" initialReader={reader}/>));await until(()=>Boolean(document.querySelector('.client-review h1')?.textContent?.includes('Client workspace')));assert.equal(document.querySelector('.editor-shell'),null);await click('User Flow');assert.equal(document.querySelectorAll('.flow-port').length,0);await click('Brief');assert.ok(document.querySelector('.brief-reader article'));assert.equal(document.querySelector('.brief-reader textarea'),null);assert.equal(document.querySelectorAll('textarea:not([readonly])').length,0);current={...reviewProject,title:'Perubahan tim terlihat'};await act(async()=>window.dispatchEvent(new Event('focus')));await until(()=>Boolean(document.querySelector('.client-review h1')?.textContent?.includes(current.title)));denied=true;await act(async()=>window.dispatchEvent(new Event('focus')));await until(()=>Boolean(document.querySelector('.client-error')));assert.equal(document.querySelector('.review-preview'),null);await act(async()=>root.unmount());
- await runManagementUiTests(downloads);await runRyanUiTests();await runWorkspaceUiTests();await runCleanUiTests();await runTeamUiTests();
+ await runManagementUiTests(downloads);await runRyanUiTests();await runWorkspaceUiTests();await runCleanUiTests();await runTeamUiTests();await runSharedWorkspaceUiTests();
 }

@@ -12,7 +12,7 @@ try {
  const dom=new JSDOM('<!doctype html><html><body><div id="test-root"></div></body></html>',{url:'http://127.0.0.1:5174/',pretendToBeVisual:true});
  const {window}=dom;
  for(const key of ['window','document','navigator','HTMLElement','HTMLDialogElement','Element','HTMLInputElement','HTMLTextAreaElement','Event','MouseEvent','KeyboardEvent','localStorage','Image'])Object.defineProperty(globalThis,key,{value:key==='window'?window:window[key],configurable:true});
- Object.defineProperty(globalThis,'File',{value:File,configurable:true});Object.defineProperty(window,'indexedDB',{value:new IDBFactory()});globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ Object.defineProperty(globalThis,'File',{value:File,configurable:true});Object.defineProperty(window,'indexedDB',{value:new IDBFactory(),configurable:true});globalThis.IS_REACT_ACT_ENVIRONMENT=true;
  window.HTMLElement.prototype.setPointerCapture=()=>{};window.HTMLElement.prototype.hasPointerCapture=()=>false;window.HTMLElement.prototype.releasePointerCapture=()=>{};
  window.HTMLDialogElement.prototype.showModal=function(){this.open=true;};window.HTMLDialogElement.prototype.close=function(){this.open=false;};
  globalThis.confirm=()=>true;

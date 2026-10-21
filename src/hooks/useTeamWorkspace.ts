@@ -12,9 +12,9 @@ import {readCloudConfig,storeCloudConfig} from '../services/supabaseRepository.t
 import {openOrCreateTemplate} from '../services/projectTemplates.ts';
 import {enterTeam,resumeTeam} from '../services/teamSession.ts';
 import type {TeamSession} from '../services/teamSession.ts';
-import type {DocumentRecord,DocumentSummary,WorkspaceRepository,SyncStatus} from '../services/workspace.ts';
+import type {DocumentRecord,DocumentSummary,DraftRecord,WorkspaceRepository,SyncStatus} from '../services/workspace.ts';
 export function useTeamWorkspace(initialRepository?:WorkspaceRepository){
- const running=useRef(false);
+ const running=useRef(false),saveError=useRef('');
  const [catalog,setCatalog]=useState<Catalog>(emptyCatalog);
  const [project,setProject]=useState<Project|null>(null),model=useRef<Project|null>(null),[documents,setDocuments]=useState<DocumentSummary[]>([]),[localDocuments,setLocalDocuments]=useState<DocumentSummary[]>([]),[versions,setVersions]=useState<Version[]>([]),[team,setTeam]=useState<TeamSession|null>(null),[ready,setReady]=useState(Boolean(initialRepository)),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[saveState,setSaveState]=useState<SaveState>('saved'),[sync,setSync]=useState<SyncStatus>('connecting');
  const [profile,setProfile]=useState<ProfileId>(()=>{try{const p=localStorage.getItem('blueprint-profile');return ProfileSchema.safeParse(p).success?p as ProfileId:'nando';}catch{return 'nando';}}),actor=useRef(profile);
@@ -23,25 +23,53 @@ export function useTeamWorkspace(initialRepository?:WorkspaceRepository){
  function clearUndo(){undo.current=[];redo.current=[];setUndoCount(0);setRedoCount(0);}
  function chooseProfile(p:ProfileId){actor.current=p;setProfile(p);try{localStorage.setItem('blueprint-profile',p);}catch{/* Label preference only. */}}
  async function perform(fn:()=>Promise<void>){if(running.current)return;running.current=true;setBusy(true);setError('');try{await fn();}catch(e){setError(errorMessage(e));}finally{running.current=false;if(alive.current)setBusy(false);}}
- async function readCatalog(r:WorkspaceRepository){const c=r.management?CatalogSchema.parse(await r.management.read()):emptyCatalog();setCatalog(c);setProfileCatalog(c.profiles);if(!c.profiles.some(p=>p.id===actor.current&&!p.deletedAt))chooseProfile(c.profiles.find(p=>!p.deletedAt)?.id??'nando');return c;}
+ function applyCatalog(c:Catalog){setCatalog(c);setProfileCatalog(c.profiles);if(!c.profiles.some(p=>p.id===actor.current&&!p.deletedAt))chooseProfile(c.profiles.find(p=>!p.deletedAt)?.id??'nando');}
+ async function readCatalog(r:WorkspaceRepository){const c=r.management?CatalogSchema.parse(await r.management.read()):emptyCatalog();if(r===repo.current&&alive.current)applyCatalog(c);return c;}
  async function enrich(rows:DocumentSummary[],r:WorkspaceRepository,c:Catalog){return Promise.all(rows.map(async row=>{const id=c.projects.find(s=>s.id===row.id)?.coverAssetId;return id&&r.management?.cover?{...row,cover:await r.management.cover(row.id,id)}:row;}));}
- const refresh=useCallback(async():Promise<void>=>{if(!repo.current)return;if(refreshing.current){refreshAgain.current=true;return;}refreshing.current=true;const r=repo.current;try{const rows=await r.list();if(r!==repo.current||!alive.current)return;const c=await readCatalog(r);setDocuments(await enrich(rows,r,c));const a=saver.current;if(a&&historyWatching.current){const history=await r.history(a.value.id);if(r===repo.current&&saver.current===a&&alive.current)setVersions(history);}if(!a||a.saving)return;if(c.projects.some(s=>s.id===a.value.id&&s.trashedAt)){setError('Proyek dipindahkan ke Trash. Download draft bila ada perubahan.');return;}const current=await r.load(a.value.id);if(!current||saver.current!==a||a.saving)return;if(current.token!==a.savedToken){const accepted=await a.acceptRemote({...current,project:upgradeDesign(current.project)});if(accepted){clearUndo();setNotice('Perubahan tim diterima.');}}}catch(e){if(alive.current)setError('Sinkronisasi belum berhasil: '+errorMessage(e));}finally{refreshing.current=false;if(refreshAgain.current&&alive.current){refreshAgain.current=false;void refresh();}}},[]);
+ const refresh=useCallback(async():Promise<void>=>{
+  if(!repo.current)return;
+  if(refreshing.current){refreshAgain.current=true;return;}
+  refreshing.current=true;const r=repo.current,isCurrent=()=>alive.current&&r===repo.current;
+  try{
+   // The open canvas updates before slower thumbnail/catalog/history requests.
+   const a=saver.current;
+   if(a&&!a.saving){
+    const current=await r.load(a.value.id);
+    if(!isCurrent())return;
+    if(current&&saver.current===a&&!a.saving&&current.token!==a.savedToken){
+     const accepted=await a.acceptRemote({...current,project:upgradeDesign(current.project)});
+     if(accepted){clearUndo();setNotice('Perubahan tim diterima.');}
+    }
+   }
+   const [rows,c]=await Promise.all([r.list(),readCatalog(r)]),enriched=await enrich(rows,r,c);
+   if(!isCurrent())return;setDocuments(enriched);
+   if(a&&a===saver.current){
+    if(c.projects.some(s=>s.id===a.value.id&&s.trashedAt)){setError('Proyek dipindahkan ke Trash. Download draft bila ada perubahan.');return;}
+    if(historyWatching.current){const history=await r.history(a.value.id);if(isCurrent()&&saver.current===a)setVersions(history);}
+    // Retry pending writes after focus/reconnect as well as on the next edit.
+    if(isCurrent()&&saver.current===a&&!a.saving&&a.dirty&&!a.hasConflict)await a.flush();
+   }
+  }catch(e){if(isCurrent())setError('Sinkronisasi belum berhasil: '+errorMessage(e));}
+  finally{refreshing.current=false;if(refreshAgain.current&&alive.current){refreshAgain.current=false;void refresh();}}
+ },[]);
  async function loadRecord(record:DocumentRecord){
-  await saver.current?.stop();const repository=repo.current!,journal=local.current!,base=validateProject(record.project),p=upgradeDesign(base),key=repository.scope+'/'+p.id,draft=await journal.draft(key);
-  show(p);clearUndo();setError('');setSaveState('saved');setVersions([]);
-  const a:Autosaver=new Autosaver(repository,base,record.token,()=>actor.current,value=>journal.journal(key,value),(state,e)=>{if(alive.current&&saver.current===a){setSaveState(state);if(e)setError(e.message);}},r=>{if(alive.current&&saver.current===a){if(model.current&&!sameProject(model.current,r.project)){clearUndo();show(r.project);}setDocuments(rows=>rows.some(d=>d.id===r.id)?rows.map(d=>d.id===r.id?{...d,title:r.project.title,updatedAt:r.project.updatedAt,pages:r.project.nodes.length,preview:r.project.nodes[0].design}:d):[...rows,{id:r.id,title:r.project.title,updatedAt:r.project.updatedAt,pages:r.project.nodes.length,preview:r.project.nodes[0].design}]);}},500);
+  await saver.current?.stop();const repository=repo.current!,journal=local.current!,base=validateProject(record.project),p=upgradeDesign(base),key=repository.scope+'/'+p.id;
+  let draft:DraftRecord|null|undefined;try{draft=await journal.draft(key);}catch(e){if(repository.kind!=='supabase')throw e;}
+  show(p);clearUndo();setError('');saveError.current='';setSaveState('saved');setVersions([]);
+  const a:Autosaver=new Autosaver(repository,base,record.token,()=>actor.current,value=>journal.journal(key,value),(state,e)=>{if(alive.current&&saver.current===a){setSaveState(state);if(e){saveError.current=e.message;setError(e.message);}else if(state==='saved'&&saveError.current){const previous=saveError.current;setError(value=>value===previous||value==='Sinkronisasi belum berhasil: '+previous?'':value);saveError.current='';}}},r=>{if(alive.current&&saver.current===a){if(model.current&&!sameProject(model.current,r.project)){clearUndo();show(r.project);}setDocuments(rows=>rows.some(d=>d.id===r.id)?rows.map(d=>d.id===r.id?{...d,title:r.project.title,updatedAt:r.project.updatedAt,pages:r.project.nodes.length,preview:r.project.nodes[0].design}:d):[...rows,{id:r.id,title:r.project.title,updatedAt:r.project.updatedAt,pages:r.project.nodes.length,preview:r.project.nodes[0].design}]);}},500);
   saver.current=a;
   if(draft){let recovered=upgradeDesign(draft.project);try{if(draft.baseToken!==record.token){if(!draft.baseProject)throw new Error('CONFLICT: Draft lama belum terkirim, versi tim sudah berubah.');recovered=mergeProjects(draft.baseProject,recovered,p);}show(recovered);a.edit(recovered);setNotice('Draft perangkat yang belum terkirim dipulihkan.');}catch(e){show(recovered);a.edit(recovered);a.markConflict(errorMessage(e));}}
   else if(!sameProject(base,p))a.edit(p);
  }
- async function activate(repository:WorkspaceRepository,session:TeamSession|null){const rows=await repository.list(),catalog=await readCatalog(repository);await saver.current?.stop();saver.current=null;model.current=null;setProject(null);unsubscribe.current();const old=repo.current;repo.current=repository;setTeam(session);setDocuments(await enrich(rows,repository,catalog));setReady(true);setSaveState('saved');clearUndo();unsubscribe.current=repository.watch(()=>void refresh(),setSync);if(old&&old!==repository&&old!==local.current)await old.close();}
+ async function activate(repository:WorkspaceRepository,session:TeamSession|null){const rows=await repository.list(),catalog=await readCatalog(repository),enriched=await enrich(rows,repository,catalog);await saver.current?.flush();await saver.current?.stop();saver.current=null;model.current=null;setProject(null);unsubscribe.current();const old=repo.current;repo.current=repository;applyCatalog(catalog);setTeam(session);setDocuments(enriched);setReady(true);setSaveState('saved');clearUndo();unsubscribe.current=repository.watch(()=>void refresh(),setSync);if(old&&old!==repository&&old!==local.current)await old.close();}
  useEffect(()=>{alive.current=true;const device=createLocalWorkspace(window.indexedDB);local.current=device;let canceled=false;
-  void(async()=>{try{const rows=await device.list();if(canceled)return;setLocalDocuments(rows);if(initialRepository)await activate(initialRepository,null);else {const config=readCloudConfig();if(config&&!new URLSearchParams(window.location.hash.slice(1)).has('join')){try{const s=await resumeTeam(config);if(!canceled)await activate(s.repository,s);}catch(e){setError(errorMessage(e));setReady(false);}}}}catch(e){if(!canceled)setError(errorMessage(e));}finally{if(!canceled)setLoading(false);}})();
+  void device.list().then(rows=>{if(!canceled)setLocalDocuments(rows);}).catch(()=>{/* Optional legacy recovery must not block cloud access. */});
+  void(async()=>{try{if(initialRepository)await activate(initialRepository,null);else {const config=readCloudConfig();if(config&&!new URLSearchParams(window.location.hash.slice(1)).has('join')){try{const s=await resumeTeam(config);if(!canceled)await activate(s.repository,s);}catch(e){setError(errorMessage(e));setReady(false);}}}}catch(e){if(!canceled)setError(errorMessage(e));}finally{if(!canceled)setLoading(false);}})();
   const before=(event:BeforeUnloadEvent)=>{if(saver.current?.dirty){event.preventDefault();event.returnValue='';}};const hide=()=>{void saver.current?.persistDraft().catch(()=>{});};window.addEventListener('beforeunload',before);window.addEventListener('pagehide',hide);
   return()=>{canceled=true;alive.current=false;unsubscribe.current();const a=saver.current,r=repo.current;void(async()=>{await a?.stop();if(r&&r!==device)await r.close();await device.close();})().catch(()=>{});window.removeEventListener('beforeunload',before);window.removeEventListener('pagehide',hide);};
  },[]);
  async function deviceProject(id:string){const record=await local.current!.load(id);if(!record)throw new Error('Proyek perangkat tidak ditemukan.');const draft=await local.current!.draft('device/'+id);return upgradeDesign(draft?.project??record.project);}
- async function connect(mode:'create'|'join',value:string,copy:boolean,newProfile?:string){let connected=false;await perform(async()=>{const session=await enterTeam(mode,value);if(newProfile?.trim()){if(!session.repository.management)throw new Error('Database profil belum siap.');const p=await session.repository.management.profile('create',null,newProfile);chooseProfile(p.id);}if(copy&&(await session.repository.list()).length===0){for(const row of localDocuments){const p=await deviceProject(row.id);await session.repository.write(p,null,actor.current,'Dipulihkan dari perangkat');}}await activate(session.repository,session);connected=true;setNotice(mode==='create'?'Ruang tim siap. Bagikan undangan untuk laptop lain.':'Berhasil bergabung. Proyek tim yang sama sudah tersedia.');});return connected;}
+ async function connect(mode:'create'|'join',value:string,copy:boolean,newProfile?:string){let connected=false;await perform(async()=>{await saver.current?.flush();const previous=readCloudConfig();let session:TeamSession|undefined;try{session=await enterTeam(mode,value);if(newProfile?.trim()){if(!session.repository.management)throw new Error('Database profil belum siap.');const p=await session.repository.management.profile('create',null,newProfile);chooseProfile(p.id);}if(copy&&(await session.repository.list()).length===0){for(const row of localDocuments){const p=await deviceProject(row.id);await session.repository.write(p,null,actor.current,'Dipulihkan dari perangkat');}}await activate(session.repository,session);connected=true;setNotice(mode==='create'?'Ruang tim siap. Bagikan undangan untuk laptop lain.':'Berhasil bergabung. Proyek tim yang sama sudah tersedia.');}catch(e){storeCloudConfig(previous);await session?.repository.close();throw e;}});return connected;}
  async function open(id:string){if(catalog.projects.some(s=>s.id===id&&s.trashedAt))throw new Error('Pulihkan proyek dari Trash dahulu.');await saver.current?.flush();const r=await repo.current!.load(id);if(!r)throw new Error('Proyek tidak ditemukan di ruang ini.');await loadRecord(r);}
  async function home(){await saver.current?.flush();await saver.current?.stop();saver.current=null;model.current=null;setProject(null);const r=repo.current!,c=await readCatalog(r);setDocuments(await enrich(await r.list(),r,c));clearUndo();}
  function change(input:Project,history=true){try{const p=validateProject({...input,updatedAt:new Date().toISOString()});if(history&&model.current){undo.current=[...undo.current.slice(-29),model.current];redo.current=[];setUndoCount(undo.current.length);setRedoCount(0);}show(p);saver.current?.edit(p);}catch(e){setError(errorMessage(e));}}

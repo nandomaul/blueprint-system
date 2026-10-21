@@ -1,3 +1,11 @@
+# Canvas Blueprint — MAP-013
+
+Autosave dan sinkronisasi antar komputer memakai ruang tim Supabase yang sama. Halaman masuk mengutamakan undangan; nama profil bukan ruang penyimpanan. ID ruang kecil terlihat di Home/editor. Link undangan juga bisa dibuka ketika editor sedang aktif.
+
+Panduan: [docs/MAP-013.md](docs/MAP-013.md). Tidak ada SQL baru; schema online MAP-012 sudah terpasang. Gunakan satu undangan yang sama pada seluruh komputer. Installer menerima baseline MAP-011/MAP-012 terverifikasi dan mempertahankan alias lokal `deploy: npm run build`. Deploy Pages sudah diizinkan pengguna; push/publish dari Mac mengikuti panduan.
+
+## Catatan versi sebelumnya
+
 # Canvas Blueprint — MAP-012
 
 Settings tiga tab, bahasa Indonesia/English, profil dengan foto dan Trash, chat/catatan tim dengan mention dan badge. Jumlah halaman di bawah nama proyek; Manage project dan download diringkas; ikon dibedakan. Isi proyek/keputusan tim tetap utuh.

@@ -1,3 +1,16 @@
+# PROJECT_STATE — MAP-013
+
+- Root cause verified live21Oct: four workspaces share name Ruang tim Personnel; each has one member. Main/original ID 1e6615c9-4f88-4ebc-a448-5e4226d2d459 holds2 documents. Two other rooms each have a separate Ryan-template copy. Matching N/H/R labels do not join sessions to a workspace. Do not merge/delete these production rooms or overwrite their same-ID documents.
+- Join is now the default; create is explicitly Ruang baru with empty name and a short separation hint. Invite hash changes open the join gate in an already mounted editor; cancel keeps the original editor. Pending writes flush before switching rooms; failure retains old session config. Private invite capabilities never ship in Git/installer/docs.
+- Small workspace-ID badges on Home/editor. All devices must open the same private invitation and the same project. Supabase is canonical; legacy IndexedDB listing/recovery failures cannot prevent connecting/loading/saving online. Failed cloud writes never acknowledge saved. Dirty in-memory drafts remain downloadable and unload warns; no guarantee of durable browser backup if browser storage is unavailable.
+- Realtime push subscriptions remain member-filtered. Lightweight project_id/token probes every3s cover missed pushes; full metadata refresh15s and focus/online/visible refresh remain. In-flight/disposed probes are guarded and channels/timers cleaned up. Open document is fetched before thumbnails/catalog/history; pending errors retry after reconnect/refresh. Remote replies from previous rooms cannot replace current room state.
+- SQL MAP-012 and publication bp_documents/bp_document_versions/bp_editor_profiles/bp_document_settings/bp_chat_messages verified live. No DDL needed or executed for MAP-013.
+- Actual Supabase QA: two independent anonymous authenticated members in isolated QA workspace; default500ms autosave A→B without Save/reload while browser journal fails; independent concurrent edits merge; new page/button/navigation/flow persist B→A; unjoined public client denied. A separate raw postgres_changes channel received4 actual database events. Observed total A→B latency7.385s through this runtime network; no promise of zero latency. QA fixtures are separate from production; attempted exact cleanup via MCP returned invalid/expired requestState and did not execute, so temporary QA rooms remain isolated (no team invites exposed).
+- Validation includes61 Node/domain/SQL tests, JSDOM shared-hook sessions with unavailable browser recovery and network retry, onboarding/invite-cancel, existing UI regressions, typecheck/lint/build and guarded installer checks. JSDOM is not native Safari/HP pixel testing.
+- Deployment authorized by user21Oct. This runtime has no user Git checkout/credentials. Existing safe push script and manual Pages workflow remain the path from Mac; no claim of remote deployment before deploy job green. Mac root ~/Desktop/0. Canvas UI-UX, Node24, localhost5174. Backup/rollback outside root.
+
+## State sebelumnya
+
 # PROJECT_STATE — MAP-012
 
 - Baseline MAP-011 pulih dari backup006+installer011; semua 128 source guard cocok persis. Baseline lengkap disimpan map012-baseline sebelum perubahan. Enam screenshot100318..101209 sudah dibaca pada awal sesi.

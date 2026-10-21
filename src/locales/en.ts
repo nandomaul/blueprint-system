@@ -587,5 +587,14 @@ export const english:Record<string,string>={
  "Menunggu persetujuan": "Awaiting approval",
  "Disetujui": "Approved",
  "Ditolak": "Rejected",
- "Dokumen diarsipkan": "Document archived"
+ "Dokumen diarsipkan": "Document archived",
+ "Ruang baru":"New workspace",
+ "Buat ruang":"Create workspace",
+ "Nama ruang baru":"New workspace name",
+ "Tautan undangan tim":"Team invitation link",
+ "Gunakan undangan yang sama di semua komputer.":"Use the same invitation on every computer.",
+ "Ruang baru menyimpan proyek terpisah dari tim lain.":"A new workspace keeps projects separate from other teams.",
+ "Kembali ke ruang sebelumnya":"Return to previous workspace",
+ "Ruang tim ":"Workspace ",
+ "Perubahan belum terkirim. Download JSON sebelum menutup tab.": "Changes have not been sent. Download JSON before closing this tab.",
 };
