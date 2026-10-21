@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const revision = 'MAP-013';
+export const revision = 'MAP-014';
 export const ProfileSchema = z.union([z.enum(['nando','hadist','ryan']),z.string().regex(/^p_[0-9a-f-]{36}$/)]);
 export type ProfileId = z.infer<typeof ProfileSchema>;
 export const profiles = [{ id: 'nando', name: 'Nando', initial: 'N' }, { id: 'hadist', name: 'Hadist', initial: 'H' }, { id: 'ryan', name: 'Ryan', initial: 'R' }] as const;

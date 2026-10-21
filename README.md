@@ -1,3 +1,11 @@
+# Canvas Blueprint — MAP-014
+
+Kolaborasi: avatar maksimal3 +N di kiri Preview, daftar lokasi/aktivitas editor, chat di kelompok kanan, klik background melepas koneksi/pilihan alur, geser2jari untuk pan, Trash langsung tanpa mengetik passcode, menu proyek ringkas yang tidak terpotong container.
+
+Panduan: [docs/MAP-014.md](docs/MAP-014.md). SQL tambahan **blueprint-shared-MAP-014.sql** belum terpasang online: pemasangan aman melalui koneksi MCP gagal dengan Invalid or expired requestState. SQL yang disertakan hanya memetakan ruang utama untuk anggota yang sudah punya izin serta mengizinkan Presence per anggota; tidak memberi membership baru. Rencana akses terbuka untuk semua pengunjung ditahan setelah auto-review menolak perluasan akses produksi. Pengguna perlu menyetujui dampak akses terbuka secara eksplisit sebelum perubahan tersebut dijalankan.
+
+## Catatan versi sebelumnya
+
 # Canvas Blueprint — MAP-013
 
 Autosave dan sinkronisasi antar komputer memakai ruang tim Supabase yang sama. Halaman masuk mengutamakan undangan; nama profil bukan ruang penyimpanan. ID ruang kecil terlihat di Home/editor. Link undangan juga bisa dibuka ketika editor sedang aktif.

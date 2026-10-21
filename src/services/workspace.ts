@@ -1,4 +1,5 @@
 import type {ChatDraft,ChatPage} from '../domain/chat.ts';
+import type {PresenceRepository} from '../domain/presence.ts';
 import type {Catalog,ProjectAction,ProfileAction,EditorProfile} from '../domain/catalog.ts';
 import type { ProfileId, Project, Version, PageDesign } from '../domain/model.ts';
 export type DocumentRecord={id:string;token:string;project:Project};
@@ -7,6 +8,7 @@ export type DraftRecord={key:string;baseToken:string|null;project:Project;basePr
 export type SyncStatus='connecting'|'live'|'reconnecting'|'device';
 export interface ChatRepository {page:(profile:ProfileId,before?:string)=>Promise<ChatPage>;send:(profile:ProfileId,draft:ChatDraft)=>Promise<string>;read:(profile:ProfileId,lastId:string)=>Promise<string>;watch:(changed:()=>void)=>()=>void;}
 export interface WorkspaceRepository {
+ presence?:PresenceRepository;
  chat?:ChatRepository;
   kind:'device'|'supabase';scope:string;
   management?:{updateProfile?:(id:ProfileId,name:string,avatar:string|null)=>Promise<EditorProfile>;cover?:(projectId:string,assetId:string)=>Promise<string|undefined>;read:()=>Promise<Catalog>;profile:(action:ProfileAction,id:string|null,name?:string)=>Promise<EditorProfile>;projects:(action:ProjectAction,ids:string[],value?:string|null,passcode?:string,profile?:ProfileId)=>Promise<void>};

@@ -5,7 +5,7 @@ import { AssetSchema, ProjectSchema, VersionSchema, validateProject } from '../d
 import type { Asset, ProfileId, Project } from '../domain/model.ts';
 import type { Repository, SaveResult } from './repository.ts';
 const configKey = 'blueprint-cloud-v2';
-export const CloudConfigSchema = z.object({ url: z.string().url(), key: z.string().min(20), workspaceId: z.string().uuid() });
+export const CloudConfigSchema = z.object({ url: z.string().url(), key: z.string().min(20), workspaceId: z.string().uuid(), entry:z.enum(['shared','invite']).optional() });
 export type CloudConfig = z.infer<typeof CloudConfigSchema>;
 const RemoteAssetSchema = AssetSchema.omit({ data: true }).extend({ storagePath: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
 const RemoteProjectSchema = ProjectSchema.innerType().extend({ assets: z.array(RemoteAssetSchema).max(30) });

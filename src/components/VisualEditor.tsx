@@ -36,7 +36,7 @@ export function VisualEditor({project,node,onChange,onUpload,onDeleteAsset,onSel
  useEffect(()=>{const resize=()=>{if(autoFit.current)fit();};resize();const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(resize):null;if(surface.current)observer?.observe(surface.current);return()=>observer?.disconnect();},[fit,layout.panels,layout.zen,layout.stripHeight,layout.stripHidden]);
  function zoom(value:number){autoFit.current=false;setScale(Math.max(.1,Math.min(2,value)));}
  function fitCanvas(){autoFit.current=true;fit();}
- useWorkspaceZoom(surface,step=>zoom(scale+step),fitCanvas);
+ useWorkspaceZoom(surface,step=>zoom(scale+step),fitCanvas,(dx,dy)=>{if(surface.current){surface.current.scrollLeft+=dx;surface.current.scrollTop+=dy;}});
  useEffect(()=>{setSelected(null);setEditing(null);},[node.id]);
  function apply(design:PageDesign){onChange(editDesign(project,node.id,design));}
  function clamp(e:DesignElement){const width=Math.max(24,Math.min(d.width,e.width)),height=Math.max(24,Math.min(d.height,e.height));return {...e,width,height,x:Math.round(Math.max(0,Math.min(d.width-width,e.x))),y:Math.round(Math.max(0,Math.min(d.height-height,e.y)))};}

@@ -1,4 +1,5 @@
 import {cloudChat} from './cloudChat.ts';
+import {cloudPresence} from './cloudPresence.ts';
 import {cloudManagement} from './cloudManagement.ts';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {z} from 'zod';
@@ -9,7 +10,7 @@ import type {WorkspaceRepository} from './workspace.ts';
 const response=z.object({token:z.string().uuid()});
 export function createCloudWorkspace(client:SupabaseClient,workspaceId:string):WorkspaceRepository {
   z.string().uuid().parse(workspaceId);const codec=assetCodec(client,workspaceId),management=cloudManagement(client,workspaceId);let stop=()=>{};const covers=new Map<string,string>();management.cover=async(id,assetId)=>{const {data,error}=await client.from('bp_documents').select('assets:payload->assets').eq('workspace_id',workspaceId).eq('project_id',id).maybeSingle();if(error)throw error;const assets=z.array(z.object({id:z.string(),deletedAt:z.string().nullable().optional()}).passthrough()).parse(data?.assets??[]),ref=assets.find(a=>a.id===assetId&&!a.deletedAt);if(!ref)return;if(covers.has(assetId))return covers.get(assetId);const value=await codec.cover(ref);covers.set(assetId,value);return value;};
-  return {kind:'supabase',scope:workspaceId,management,chat:cloudChat(client,workspaceId),
+  return {kind:'supabase',scope:workspaceId,management,chat:cloudChat(client,workspaceId),presence:cloudPresence(client,workspaceId),
     async list(){const {data,error}=await client.from('bp_documents').select('project_id,title,updated_at,nodes:payload->nodes').eq('workspace_id',workspaceId).order('updated_at',{ascending:false});if(error)throw new Error(error.message+' (Database MAP-003 diperlukan.)');return data.map(r=>{const nodes=z.array(z.object({design:DesignSchema.optional()})).safeParse(r.nodes);return {id:String(r.project_id),title:String(r.title),updatedAt:String(r.updated_at),pages:nodes.success?nodes.data.length:undefined,preview:nodes.success?nodes.data[0]?.design:undefined};});},
     async load(id){const {data,error}=await client.from('bp_documents').select('project_id,token,payload').eq('workspace_id',workspaceId).eq('project_id',id).maybeSingle();if(error)throw new Error(error.message);return data?{id:String(data.project_id),token:z.string().uuid().parse(data.token),project:await codec.hydrate(data.payload as unknown)}:null;},
     async write(project,token,profile,label,baseProject){
