@@ -4,7 +4,7 @@ import type {libraryItems} from '../domain/library.ts';
 
 export function LibraryPreview({item}:{item:typeof libraryItems[number][0]}){
  const lines=<><i/><i/><i/></>;
- return <span className={'library-preview sample-'+item} aria-hidden="true">
+ return <span className={'library-preview library-item-'+item} aria-hidden="true">
   {item==='button'?<span className="sample-button">{t("Button")}</span>
    :item==='input'||item==='select'||item==='textarea'?<span className="sample-input">{item==='select'?t("Pilih… ▾"):item==='textarea'?t("Catatan…"):t("Input…")}</span>
    :item==='checkbox'?<span className="sample-check">☑ <i/></span>

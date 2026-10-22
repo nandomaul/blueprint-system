@@ -1,0 +1,27 @@
+export type RoutePoint={x:number;y:number};
+export type Obstacle={x:number;y:number;width:number;height:number};
+type Side='left'|'right'|'top'|'bottom';
+const vectors:Record<Side,RoutePoint>={left:{x:-1,y:0},right:{x:1,y:0},top:{x:0,y:-1},bottom:{x:0,y:1}};
+const inside=(p:RoutePoint,r:Obstacle)=>p.x>r.x+.01&&p.x<r.x+r.width-.01&&p.y>r.y+.01&&p.y<r.y+r.height-.01;
+export function crosses(a:RoutePoint,b:RoutePoint,r:Obstacle){if(a.x===b.x)return a.x>r.x+.01&&a.x<r.x+r.width-.01&&Math.max(a.y,b.y)>r.y+.01&&Math.min(a.y,b.y)<r.y+r.height-.01;if(a.y===b.y)return a.y>r.y+.01&&a.y<r.y+r.height-.01&&Math.max(a.x,b.x)>r.x+.01&&Math.min(a.x,b.x)<r.x+r.width-.01;return true;}
+class Heap{items:{id:number;score:number}[]=[];push(v:{id:number;score:number}){let i=this.items.length;this.items.push(v);while(i){const p=(i-1)>>1;if(this.items[p].score<=v.score)break;this.items[i]=this.items[p];i=p;}this.items[i]=v;}pop(){if(!this.items.length)return;const out=this.items[0],last=this.items.pop()!;if(this.items.length){let i=0;while(i*2+1<this.items.length){let c=i*2+1;if(c+1<this.items.length&&this.items[c+1].score<this.items[c].score)c++;if(this.items[c].score>=last.score)break;this.items[i]=this.items[c];i=c;}this.items[i]=last;}return out;}}
+function simplify(points:RoutePoint[]){const out:RoutePoint[]=[];for(const p of points){const last=out.at(-1);if(last?.x===p.x&&last.y===p.y)continue;while(out.length>=2){const a=out.at(-2)!,b=out.at(-1)!;if(a.x===b.x&&b.x===p.x||a.y===b.y&&b.y===p.y)out.pop();else break;}out.push(p);}return out;}
+function search(a:RoutePoint,b:RoutePoint,rects:Obstacle[]):RoutePoint[]|null{
+ if(rects.some(r=>inside(a,r)||inside(b,r)))return null;
+ const xs=[...new Set([a.x,b.x,...rects.flatMap(r=>[r.x,r.x+r.width])])].sort((a,b)=>a-b),ys=[...new Set([a.y,b.y,...rects.flatMap(r=>[r.y,r.y+r.height])])].sort((a,b)=>a-b),w=xs.length,start=ys.indexOf(a.y)*w+xs.indexOf(a.x),goal=ys.indexOf(b.y)*w+xs.indexOf(b.x),heap=new Heap(),cost=new Map<number,number>(),prev=new Map<number,number>(),done=new Set<number>(),blocked=new Map<number,boolean>(),segments=new Map<string,boolean>();
+ const point=(id:number)=>({x:xs[id%w],y:ys[Math.floor(id/w)]}),valid=(id:number)=>{if(!blocked.has(id))blocked.set(id,rects.some(r=>inside(point(id),r)));return !blocked.get(id);};
+ for(const dir of [0,1]){const id=start*2+dir;cost.set(id,0);heap.push({id,score:Math.abs(a.x-b.x)+Math.abs(a.y-b.y)});}
+ while(heap.items.length){const item=heap.pop()!,state=item.id;if(done.has(state))continue;done.add(state);const id=Math.floor(state/2),dir=state%2,p=point(id);if(id===goal){const route:RoutePoint[]=[];let cursor:number|undefined=state;while(cursor!==undefined){route.push(point(Math.floor(cursor/2)));cursor=prev.get(cursor);}return simplify(route.reverse());}
+  const x=id%w,y=Math.floor(id/w);for(const next of [x>0?id-1:-1,x+1<w?id+1:-1,y>0?id-w:-1,y+1<ys.length?id+w:-1]){if(next<0||!valid(next))continue;const q=point(next),key=Math.min(id,next)+'/'+Math.max(id,next);if(!segments.has(key))segments.set(key,rects.some(r=>crosses(p,q,r)));if(segments.get(key))continue;const nd=p.x===q.x?1:0,nstate=next*2+nd,g=cost.get(state)!+Math.abs(p.x-q.x)+Math.abs(p.y-q.y)+(dir===nd?0:18);if(g<(cost.get(nstate)??Infinity)){cost.set(nstate,g);prev.set(nstate,state);heap.push({id:nstate,score:g+Math.abs(q.x-b.x)+Math.abs(q.y-b.y)});}}
+ }return null;
+}
+export function roundedPath(points:RoutePoint[],radius=8){if(!points.length)return '';let d=`M ${points[0].x} ${points[0].y}`;for(let i=1;i<points.length-1;i++){const a=points[i-1],b=points[i],c=points[i+1],r=Math.min(radius,(Math.abs(a.x-b.x)+Math.abs(a.y-b.y))/2,(Math.abs(c.x-b.x)+Math.abs(c.y-b.y))/2),p={x:b.x+Math.sign(a.x-b.x)*r,y:b.y+Math.sign(a.y-b.y)*r},q={x:b.x+Math.sign(c.x-b.x)*r,y:b.y+Math.sign(c.y-b.y)*r};d+=` L ${p.x} ${p.y} Q ${b.x} ${b.y} ${q.x} ${q.y}`;}const end=points.at(-1)!;return d+` L ${end.x} ${end.y}`;}
+const cache=new Map<string,{points:RoutePoint[];path:string;middle:RoutePoint;blocked:boolean}>();
+export function routeAround(start:RoutePoint,end:RoutePoint,sourceSide:Side,targetSide:Side,obstacles:Obstacle[],hint?:RoutePoint){const key=JSON.stringify([start,end,sourceSide,targetSide,obstacles,hint]);const old=cache.get(key);if(old)return old;
+ let route:RoutePoint[]|null=null,usedPadding=14;for(const padding of [14,6,2]){const rects=obstacles.map(r=>({x:r.x-padding,y:r.y-padding,width:r.width+padding*2,height:r.height+padding*2})),v=vectors[sourceSide],u=vectors[targetSide],a={x:start.x+v.x*(padding+1),y:start.y+v.y*(padding+1)},b={x:end.x+u.x*(padding+1),y:end.y+u.y*(padding+1)};
+ if(hint&&!rects.some(r=>inside(hint,r))){const first=search(a,hint,rects),second=search(hint,b,rects);if(first&&second)route=[...first,...second.slice(1)];}
+ route??=search(a,b,rects);if(route){usedPadding=padding;break;}}
+ const points=route?simplify([start,...route,end]):[start],blocked=!route;let length=0;for(let i=1;i<points.length;i++)length+=Math.abs(points[i].x-points[i-1].x)+Math.abs(points[i].y-points[i-1].y);let remaining=length/2,middle=start;
+ for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],distance=Math.abs(a.x-b.x)+Math.abs(a.y-b.y);if(remaining<=distance){const ratio=distance?remaining/distance:0;middle={x:a.x+(b.x-a.x)*ratio,y:a.y+(b.y-a.y)*ratio};break;}remaining-=distance;}
+ const value={points,path:roundedPath(points,Math.min(8,usedPadding/2)),middle,blocked};if(cache.size>600)cache.clear();cache.set(key,value);return value;
+}

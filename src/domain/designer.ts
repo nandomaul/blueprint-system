@@ -37,7 +37,8 @@ export function duplicatePage(p:Project,id:string): Project {
   const assetMap=new Map(p.assets.filter(a=>a.nodeId===id).map((a,i)=>[a.id,assets[i].id]));
   const node={...old,id:nodeId,title:(old.title+' salinan').slice(0,80),route:old.route+'-copy',x:old.x+50,y:old.y+170,activeAssetId:old.activeAssetId?assetMap.get(old.activeAssetId)??null:null,design:old.design?{...old.design,...(old.design.layouts?{layouts:{...old.design.layouts}}:{}),elements:old.design.elements.map(e=>{const copy={...e,id:elementMap.get(e.id)!,assetId:e.assetId?assetMap.get(e.assetId)??null:null};delete copy.edgeId;return copy;})}:undefined};
   if(node.design?.layouts){for(const mode of ['web','mobile','presentation'] as const){const layout=node.design.layouts[mode];if(layout)node.design.layouts[mode]={...layout,elements:layout.elements.filter(e=>elementMap.has(e.id)).map(e=>({...e,id:elementMap.get(e.id)!}))};}}
-  const result=validateProject({...p,nodes:[...p.nodes,node],assets:[...p.assets,...assets],presentation:[...p.presentation,nodeId],updatedAt:new Date().toISOString()});return node.design?editDesign(result,nodeId,node.design):result;
+  const canvas=p.designLayer?.canvases?.find(c=>c.id===id);const designLayer=p.designLayer?{...p.designLayer,...(canvas?{canvases:[...(p.designLayer.canvases??[]),{id:nodeId,design:{...canvas.design,elements:canvas.design.elements.map(e=>({...e,id:crypto.randomUUID(),assetId:e.assetId?assetMap.get(e.assetId)??null:null}))}}]}:{})}:undefined;
+  const result=validateProject({...p,...(designLayer?{designLayer}:{}),nodes:[...p.nodes,node],assets:[...p.assets,...assets],presentation:[...p.presentation,nodeId],updatedAt:new Date().toISOString()});return node.design?editDesign(result,nodeId,node.design):result;
 }
 export function readiness(p:Project): string[] {
   const issues:string[]=[];

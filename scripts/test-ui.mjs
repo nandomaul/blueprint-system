@@ -13,7 +13,7 @@ try {
  const {window}=dom;
  // JSDOM has no BroadcastChannel; do not leak Node host MessagePorts into the browser fixture.
  Object.defineProperty(globalThis,'BroadcastChannel',{value:window.BroadcastChannel,configurable:true});
- for(const key of ['window','document','navigator','HTMLElement','HTMLDialogElement','Element','HTMLInputElement','HTMLTextAreaElement','Event','MouseEvent','KeyboardEvent','localStorage','Image'])Object.defineProperty(globalThis,key,{value:key==='window'?window:window[key],configurable:true});
+ for(const key of ['window','document','navigator','HTMLElement','HTMLDialogElement','Element','HTMLInputElement','HTMLTextAreaElement','Event','CustomEvent','MouseEvent','KeyboardEvent','localStorage','Image'])Object.defineProperty(globalThis,key,{value:key==='window'?window:window[key],configurable:true});
  Object.defineProperty(globalThis,'File',{value:File,configurable:true});Object.defineProperty(window,'indexedDB',{value:new IDBFactory(),configurable:true});globalThis.IS_REACT_ACT_ENVIRONMENT=true;
  window.HTMLElement.prototype.setPointerCapture=()=>{};window.HTMLElement.prototype.hasPointerCapture=()=>false;window.HTMLElement.prototype.releasePointerCapture=()=>{};
  window.HTMLDialogElement.prototype.showModal=function(){this.open=true;};window.HTMLDialogElement.prototype.close=function(){this.open=false;};
@@ -21,5 +21,8 @@ try {
  let downloads=0;globalThis.URL.createObjectURL=()=>{downloads++;return 'blob:ui-test';};globalThis.URL.revokeObjectURL=()=>{};window.HTMLAnchorElement.prototype.click=()=>{};
  Object.defineProperty(globalThis,'Image',{value:class {src='';naturalWidth=100;naturalHeight=100;async decode(){}},configurable:true});
  const {runUiTests}=await import(pathToFileURL(path.join(dir,'harness.mjs')).href);
- await runUiTests(()=>downloads);dom.window.close();console.log('UI DOM: create system/page, edit preview, button navigation, image deletion, profile, autosave reload, History and download passed.');
+ // Keep the process alive until the complete asynchronous harness resolves; a partial run must never exit successfully.
+ let watchdog;const deadline=new Promise((_,reject)=>{watchdog=setTimeout(()=>reject(new Error('UI DOM suite exceeded 120 seconds before completion.')),120000);});
+ try{await Promise.race([runUiTests(()=>downloads),deadline]);}finally{clearTimeout(watchdog);}
+ dom.window.close();console.log('UI DOM: create system/page, edit preview, button navigation, image deletion, profile, autosave reload, History and download passed.');
 }finally{await rm(dir,{recursive:true,force:true});}

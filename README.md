@@ -1,3 +1,65 @@
+# Canvas Blueprint — MAP-020
+
+Preview tidak lagi tertutup canvas Design UI yang belum diisi. System UI tetap terlihat sampai visual tersedia; halaman kosong diberi keterangan. Snapshot lama diproyeksikan untuk preview tanpa mengubah dokumen. Kegagalan render diisolasi dengan Coba lagi/detail error sehingga editor/draft tetap terbuka. Dialog mempunyai fallback jika API modal browser tidak tersedia.
+
+PC ↔ Mobile memakai satu frame yang meregang selama360ms; ukuran, posisi elemen, skala dan sudut mengikuti transisi. Isian form sementara tetap ada saat berganti perangkat. Preferensi reduced-motion memakai perubahan langsung. Layout tersimpan tidak diubah oleh preview.
+
+Tidak ada migrasi/schema baru untuk perbaikan ini. File `supabase/manual/blueprint-check-MAP-020.sql` hanya SELECT metadata untuk dijalankan pengguna sendiri. Semua file SQL/migrasi sebelumnya dipertahankan byte-identik. SQL MAP-017 yang dilampirkan adalah tambahan chat, memerlukan fondasi sebelumnya, tanpa DROP TABLE/DROP COLUMN/TRUNCATE.
+
+Panduan: [docs/MAP-020.md](docs/MAP-020.md). Dev dahulu; publish ditahan setelah pengguna melaporkan Preview kosong. Tidak ada akses/tes online Supabase. Pemeriksaan DOM/offline dan build bukan pengujian visual Safari/HP.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-019
+
+Toolbar kembali satu baris bersama File/Edit/View/History, Undo/Redo dan seluruh ikon cepat. Panel System UI/Design UI memakai baseline kiri yang sejajar; posisi setelah drag/dock disimpan sebagai preferensi browser. Drag memakai titik pegangan sebenarnya, termasuk rail/palette/gambar, tanpa offset tengah tetap. Layoutv4 memulai susunan kiri sekali; versi lama disimpan terpisah.
+
+Saat chat/asisten dibuka, tool panel/properti disembunyikan sementara dan canvas otomatis fit ke ruang tersisa. Membuka tool menutup sidebar; lokasi panel sebelumnya dipertahankan. HP menampilkan chat satu layar dan toolbar atas bisa digeser mendatar tanpa pindah baris. Strip halaman tetap ada.
+
+Simulasi AI: FAQ teks/gambar dengan sumber knowledge proyek, Review Draft contoh untuk nama/tanggal/typo, dan klasifikasi dari nama file/deskripsi. Tidak ada provider AI/OCR/API eksternal atau penyimpanan dokumen HR produksi. Demo tanpa login: tombol Coba demo atau `?demo=personnel`. Delapan kebutuhan tetap ada di Brief→Fitur; role, tanda tangan/stempel dan backend HR masih rancangan.
+
+Supabase tidak diakses/diubah. Tidak ada SQL/schema baru, password atau deploy. ZIP unggahan lama cocok source MAP-015 dengan alias deploy; dipakai sebagai acuan toolbar. Installer menjaga perubahan terbaru dan menerima baseline011–018 terverifikasi. [Panduan](docs/MAP-019.md).
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-018
+
+File/Edit/View/History tetap ada bersama ikon cepat Undo/Redo/History, brief, simpan, download dan manage. Dua baris desktop memisahkan menu dan tool; mobile membungkus grup tanpa memotong fitur. Satu tool panel aktif, termasuk saat membuka preferensi floating lama. Preview komponen tidak lagi memakai class wrapper yang sama dengan isi contoh.
+
+Flow dibuka dengan seluruh kartu, kolom dan jalur terlihat di tengah. Route dan tombol mempunyai area terpisah; label koneksi menghindari kartu/label lain. Shared trunk digambar satu kali, koneksi tetap punya ID dan pegangan masing-masing. Tombol Buka alur membuka proyek aktif. Badge revisi Home dihapus.
+
+**Brief & data → Fitur:** delapan spesifikasi ADF-riends beserta kriteria penerimaan. Klik **Tambahkan ke brief** untuk menambahkannya ke proyek lama tanpa mengganti desain/keputusan. Template Personnel baru sudah memuatnya. Fitur AI/approval ini spesifikasi produk yang akan dibangun.
+
+**Batas kerja:** tidak ada akses atau perubahan Supabase pada MAP-018. Tidak memerlukan migrasi schema baru. SQL dikirim sebagai file murni dan hanya dijalankan pengguna; installer tidak menjalankan SQL/deploy. [Panduan lengkap](docs/MAP-018.md).
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-017
+
+Seleksi kotak/banyak aset, drag dan delapan pegangan resize tersedia pada System UI dan Design UI. Copy/paste membawa gambar dan target halaman. Toolbar properti dapat bergerak/dock; menu File/Edit/View/History menggantikan blok nama file/titik hijau. Panel Upload dibatasi ruang editor.
+
+Flow memakai routing menghindari kartu, penanda warna/note bersama dan shortcut referensi chat. Chat mendukung screenshot draft sebelum kirim, reply, menu pesan, hapus khusus pengirim, reminder/undo dan status baca per akun. Canvas visual serta hasil PDF/ZIP mengikuti geometry yang disimpan. System UI tetap terpisah dari layout gambar.
+
+**SQL MAP-017 sudah terpasang online.** Akun/password tetap. Tidak perlu copas SQL untuk project Supabase yang sama. Frontend MAP-017 belum dipush/publish dari lingkungan ini; semua perangkat perlu versi17 sebelum mengedit data dengan field baru.
+
+Panduan pemasangan, lokasi source, penggunaan, batas verifikasi dan rollback: [docs/MAP-017.md](docs/MAP-017.md). Backup di luar root, panduan lama dipertahankan, tanpa force overwrite.
+
+## Catatan versi sebelumnya
+
+# Canvas Blueprint — MAP-016
+
+Klik kartu User Flow untuk membuka detail; tarik ujung koneksi untuk menyambung ulang, atau tarik garis/titik tengah untuk mengatur belokan. Delete/Backspace memindahkan pilihan ke Trash alur. Chat: pesan sendiri di kanan, orang lain di kiri, pemisah tanggal, Enter kirim dan Shift+Enter baris baru. Foto profil tampil bulat dengan crop proporsional.
+
+URL mengikuti proyek, halaman, System UI / Design UI / User Flow, Settings dan preview. Settings menyatukan profil, akun dan bahasa. Preferensi bahasa tetap lokal per browser. Kontrol mode presentasi/eye yang berulang dihapus; satu tombol monitor Preview dan strip thumbnail bawah tetap ada. Informasi halaman terbuka saat preview dimulai dan bisa ditutup manual.
+
+**Status:** akun dan Supabase yang sudah aktif tetap dipakai. Tidak ada SQL, migrasi, password atau aturan akses baru untuk MAP-016. Autosave dan Realtime tetap memakai repository cloud yang sama. Frontend MAP-016 belum dipush/publish dari lingkungan ini; link bertingkat di Pages memerlukan frontend baru beserta `public/404.html`.
+
+Pemasangan, lokasi source, penggunaan dan rollback: [docs/MAP-016.md](docs/MAP-016.md). Validasi: 70 tes Node/domain/SQL/SDK, suite interaksi UI DOM, typecheck, lint, build lokal dan build base Pages. Tampilan/gesture native Safari dan HP belum diverifikasi langsung.
+
+**Perbaikan installer:** panduan versi lama di `docs/` dipertahankan; perbedaan catatan MAP-015 tidak menghalangi pemasangan. Source aplikasi tetap diperiksa ketat.
+
+## Catatan versi sebelumnya
+
 # Canvas Blueprint — MAP-015
 
 Login username/password Supabase Auth. Pemilik membuat akun editor melalui Pengaturan → Akun; profil Nando/Hadist/Ryan tetap tersedia untuk dihubungkan. Login diingat browser, Log out tersedia. Share anonim hanya satu proyek (lihat saja). Avatar aktif menampilkan orang lain, klik avatar membuka lokasi/aktivitas. Flow menutup opsi ketika klik di luar dan memiliki shortcut System UI/Design UI dengan ID halaman yang sama.

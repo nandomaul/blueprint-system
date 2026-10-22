@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const revision = 'MAP-015';
+export const revision = 'MAP-020';
 export const ProfileSchema = z.union([z.enum(['nando','hadist','ryan']),z.string().regex(/^p_[0-9a-f-]{36}$/)]);
 export type ProfileId = z.infer<typeof ProfileSchema>;
 export const profiles = [{ id: 'nando', name: 'Nando', initial: 'N' }, { id: 'hadist', name: 'Hadist', initial: 'H' }, { id: 'ryan', name: 'Ryan', initial: 'R' }] as const;
@@ -20,7 +20,7 @@ const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 export const ElementSchema = z.object({
   id: z.string().min(1).max(100), kind: z.enum(elementKinds),
   text: z.string().max(4000), x: z.number().finite().min(0).max(4000), y: z.number().finite().min(0).max(4000),
-  width: z.number().finite().min(24).max(2400), height: z.number().finite().min(24).max(2400),
+  width: z.number().finite().min(24).max(2400), height: z.number().finite().min(24).max(4000),
   fontSize: z.number().min(8).max(120), color, background: color, radius: z.number().min(0).max(100),
   target: z.string().max(100), assetId: z.string().nullable(), edgeId:z.string().max(100).optional(), icon:z.enum(icons).optional(), options:z.array(z.string().max(100)).max(20).optional(), value:z.number().min(0).max(100).optional(),
 }).strict();
@@ -45,6 +45,7 @@ export const NodeSchema = z.object({
   route: z.string().max(180), purpose: z.string().max(1200), output: z.string().max(1200),
   integration: z.string().max(180), integrationStatus: z.enum(['none', 'planned', 'simulated']),
   owner: z.string().max(100), externalUrl: z.string().max(1000).refine(v => !v || /^https?:\/\//i.test(v) && (() => { try { new URL(v); return true; } catch { return false; } })(), 'Gunakan URL http/https yang valid.'),
+  flowColor:color.nullable().optional(),flowNote:z.string().max(2000).optional(),
   activeAssetId: z.string().nullable(), design: DesignSchema.optional(),
 }).strict();
 export const PointSchema=z.object({x:z.number().finite().min(-10000).max(10000),y:z.number().finite().min(-10000).max(10000)}).strict();
@@ -55,16 +56,19 @@ export type FlowColumn=z.infer<typeof FlowColumnSchema>;
 export const EdgeSchema = z.object({ id: z.string().min(1).max(100), source: z.string(), target: z.string(), label: z.string().trim().min(1).max(90), feedback: z.string().max(500), bend:PointSchema.optional(),sourceSide:SideSchema.optional(),targetSide:SideSchema.optional() }).strict();
 export const DesignBindingSchema=z.object({id:z.string().min(1).max(100),nodeId:z.string().min(1).max(100),elementId:z.string().max(100).nullable(),assetId:z.string().min(1).max(100)}).strict();
 export type DesignBinding=z.infer<typeof DesignBindingSchema>;
-export const TrashEntrySchema=z.object({id:z.string().min(1),kind:z.enum(['page','group','element','asset','binding','connections']),label:z.string().max(180),at:z.string(),node:NodeSchema.optional(),column:FlowColumnSchema.optional(),nodeId:z.string().optional(),element:ElementSchema.optional(),index:z.number().int().min(0).optional(),assetId:z.string().optional(),bindings:z.array(DesignBindingSchema).optional(),elements:z.array(z.object({nodeId:z.string(),element:ElementSchema,index:z.number().int().min(0)}).strict()).optional(),edges:z.array(EdgeSchema).optional(),presentationIndex:z.number().int().min(0).optional()}).strict().superRefine((t,c)=>{const valid=t.kind==='page'?Boolean(t.node):t.kind==='group'?Boolean(t.column):t.kind==='element'?Boolean(t.nodeId&&t.element):t.kind==='asset'?Boolean(t.assetId):t.kind==='binding'?Boolean(t.bindings?.length):Boolean(t.edges?.length);if(!valid)c.addIssue({code:z.ZodIssueCode.custom,message:'Item Trash tidak lengkap.'});});
+export const TrashEntrySchema=z.object({id:z.string().min(1),kind:z.enum(['page','group','element','asset','binding','connections']),label:z.string().max(180),at:z.string(),scope:z.enum(['system','design']).optional(),designCanvas:DesignSchema.optional(),designElements:z.array(z.object({nodeId:z.string(),element:ElementSchema,index:z.number().int().min(0)})).optional(),node:NodeSchema.optional(),column:FlowColumnSchema.optional(),nodeId:z.string().optional(),element:ElementSchema.optional(),index:z.number().int().min(0).optional(),assetId:z.string().optional(),bindings:z.array(DesignBindingSchema).optional(),elements:z.array(z.object({nodeId:z.string(),element:ElementSchema,index:z.number().int().min(0)}).strict()).optional(),edges:z.array(EdgeSchema).optional(),presentationIndex:z.number().int().min(0).optional()}).strict().superRefine((t,c)=>{const valid=t.kind==='page'?Boolean(t.node):t.kind==='group'?Boolean(t.column):t.kind==='element'?Boolean(t.nodeId&&t.element):t.kind==='asset'?Boolean(t.assetId):t.kind==='binding'?Boolean(t.bindings?.length):Boolean(t.edges?.length);if(!valid)c.addIssue({code:z.ZodIssueCode.custom,message:'Item Trash tidak lengkap.'});});
 export type TrashEntry=z.infer<typeof TrashEntrySchema>;
 export const ProjectSchema = z.object({
   schemaVersion: z.literal(1), id: z.string().min(1), title: z.string().trim().min(1).max(100), description: z.string().max(1000),
   brief: BriefSchema.default({}), updatedAt: z.string(), nodes: z.array(NodeSchema).min(1).max(80), edges: z.array(EdgeSchema).max(240),
-  designLayer:z.object({enabled:z.boolean(),bindings:z.array(DesignBindingSchema).max(1000)}).strict().optional(),trash:z.array(TrashEntrySchema).max(500).optional(),flowColumns:z.array(FlowColumnSchema).max(24).optional(), assets: z.array(AssetSchema).max(120), presentation: z.array(z.string()).min(1).max(80),
+  designLayer:z.object({enabled:z.boolean(),bindings:z.array(DesignBindingSchema).max(1000),canvases:z.array(z.object({id:z.string().min(1).max(100),design:DesignSchema}).strict()).max(80).optional()}).strict().optional(),trash:z.array(TrashEntrySchema).max(500).optional(),flowColumns:z.array(FlowColumnSchema).max(24).optional(), assets: z.array(AssetSchema).max(120), presentation: z.array(z.string()).min(1).max(80),
 }).strict().superRefine((p, ctx) => {
   const ids = new Set(p.nodes.map(n => n.id));
   if(new Set(p.flowColumns?.map(c=>c.id)).size!==(p.flowColumns?.length??0))ctx.addIssue({code:'custom',message:'ID kolom ganda.'});
   const assets = new Map(p.assets.map(a => [a.id, a]));
+  for(const canvas of p.designLayer?.canvases??[]){if(!ids.has(canvas.id)||new Set(canvas.design.elements.map(e=>e.id)).size!==canvas.design.elements.length)ctx.addIssue({code:'custom',message:'Canvas Design UI tidak valid.'});for(const e of canvas.design.elements)if(e.x+e.width>canvas.design.width||e.y+e.height>canvas.design.height||e.assetId&&assets.get(e.assetId)?.nodeId!==canvas.id||e.target&&!ids.has(e.target))ctx.addIssue({code:'custom',message:'Komponen Design UI tidak valid.'});}
+  if(new Set(p.designLayer?.canvases?.map(c=>c.id)).size!==(p.designLayer?.canvases?.length??0))ctx.addIssue({code:'custom',message:'Canvas Design UI ganda.'});
+
   const owners=new Set([...ids,...(p.trash??[]).flatMap(t=>t.node?[t.node.id]:[])]);
   if(new Set(p.trash?.map(t=>t.id)).size!==(p.trash?.length??0))ctx.addIssue({code:'custom',message:'ID Trash ganda.'});
   for(const b of p.designLayer?.bindings??[]){const n=p.nodes.find(n=>n.id===b.nodeId),a=assets.get(b.assetId);if(!n||!a||a.nodeId!==b.nodeId||a.deletedAt||b.elementId&&!n.design?.elements.some(e=>e.id===b.elementId))ctx.addIssue({code:'custom',message:'Target Design UI tidak ditemukan.'});}

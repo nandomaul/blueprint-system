@@ -10,3 +10,5 @@
 8. Penyerahan memakai installer terverifikasi, instruksi Terminal macOS, lokasi file, hasil yang terlihat, batas tes dan rollback. Backup di luar root.
 9. Jangan mencampur data rahasia dengan data presentasi/demo. Cloud key rahasia tetap di server.
 10. Update state/checkpoint saat keputusan berubah.
+
+11. Batas eksplisit pengguna MAP-018: jangan mengakses, menjalankan SQL, mengubah schema/data/akun, atau melakukan tes online di Supabase di belakang layar. Kirim SQL murni beserta arahan; pengguna mengeksekusi sendiri. Installer hanya source lokal; tidak menjalankan SQL atau deploy.

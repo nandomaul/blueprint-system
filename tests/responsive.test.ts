@@ -26,7 +26,7 @@ test('Legacy squeezed design can be arranged without deleting components and rea
  const added={...mobile,elements:[...mobile.elements,{...element('input'),id:'new-field',width:200,height:70,x:20,y:20}]};assert.equal(changeLayout(added,'web').elements.length,d.elements.length+1);
 });
 test('Panel docking, floating, ordering, persistence and reset defaults are independent of document data',()=>{
- const defaults=defaultWorkspaceLayout();assert.ok(Object.values(defaults.panels).every(p=>!p.open));const base=positionPanel(defaults,'elements',{open:true}),opened=openPanel(base,'page');assert.equal(opened.panels.layers.open,false);assert.equal(opened.panels.elements.open,true);assert.equal(opened.panels.page.open,true);
- const floating=positionPanel(opened,'page',{dock:'float',width:340,x:150,y:90}),withLayers=openPanel(floating,'layers');assert.equal(withLayers.panels.page.open,true);assert.equal(withLayers.panels.layers.open,true);
+ const defaults=defaultWorkspaceLayout();assert.ok(Object.values(defaults.panels).every(p=>!p.open));const base=positionPanel(defaults,'elements',{open:true}),opened=openPanel(base,'page');assert.equal(opened.panels.layers.open,false);assert.equal(opened.panels.elements.open,false);assert.equal(opened.panels.page.open,true);
+ const floating=positionPanel(opened,'page',{dock:'float',width:340,x:150,y:90}),withLayers=openPanel(floating,'layers');assert.equal(withLayers.panels.page.open,false);assert.equal(withLayers.panels.layers.open,true);
  assert.deepEqual(readWorkspaceLayout(JSON.stringify(withLayers)),withLayers);assert.deepEqual(readWorkspaceLayout('{bad'),defaults);assert.deepEqual(readWorkspaceLayout(JSON.stringify({...base,order:['page']})),defaults);assert.throws(()=>WorkspaceLayoutSchema.parse({...base,stripHeight:900}));
 });

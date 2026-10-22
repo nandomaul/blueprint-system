@@ -1,0 +1,9 @@
+import {useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
+import type {ReactNode} from 'react';
+export function EditorMenu({label,children,ariaLabel}:{label:string;children:ReactNode;ariaLabel?:string}){
+ const [open,setOpen]=useState(false),button=useRef<HTMLButtonElement>(null),panel=useRef<HTMLDivElement>(null),[point,setPoint]=useState({x:0,y:0});
+ useEffect(()=>{if(!open)return;const outside=(e:Event)=>{if(e.target instanceof Element&&!panel.current?.contains(e.target)&&!button.current?.contains(e.target))setOpen(false);};const key=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false);};const close=()=>setOpen(false);document.addEventListener('pointerdown',outside);document.addEventListener('click',outside);document.addEventListener('keydown',key);window.addEventListener('resize',close);const bar=button.current?.closest('.editor-topbar');bar?.addEventListener('scroll',close);return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('click',outside);document.removeEventListener('keydown',key);window.removeEventListener('resize',close);bar?.removeEventListener('scroll',close);};},[open]);
+ return <><button ref={button} className="editor-menu-button" aria-label={ariaLabel??label} aria-expanded={open} aria-haspopup="menu" onClick={()=>{const r=button.current!.getBoundingClientRect();setPoint({x:Math.max(8,Math.min(window.innerWidth-248,r.left)),y:r.bottom+6});setOpen(v=>!v);}}>{label}</button>{open&&createPortal(<div ref={panel} className="editor-menu-popup" role="menu" aria-label={label} style={{left:point.x,top:point.y}} onClick={e=>{if((e.target as Element).closest('button'))setOpen(false);}}>{children}</div>,document.body)}</>;
+}
+export function canvasAction(action:string){window.dispatchEvent(new CustomEvent('blueprint:canvas-action',{detail:action}));}

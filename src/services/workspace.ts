@@ -1,4 +1,4 @@
-import type {ChatDraft,ChatPage} from '../domain/chat.ts';
+import type {ChatDraft,ChatPage,ChatMessage} from '../domain/chat.ts';
 import type {PresenceRepository} from '../domain/presence.ts';
 import type {Catalog,ProjectAction,ProfileAction,EditorProfile} from '../domain/catalog.ts';
 import type { ProfileId, Project, Version, PageDesign } from '../domain/model.ts';
@@ -6,7 +6,7 @@ export type DocumentRecord={id:string;token:string;project:Project};
 export type DocumentSummary={id:string;title:string;updatedAt:string;pages?:number;preview?:PageDesign;cover?:string};
 export type DraftRecord={key:string;baseToken:string|null;project:Project;baseProject?:Project};
 export type SyncStatus='connecting'|'live'|'reconnecting'|'device';
-export interface ChatRepository {page:(profile:ProfileId,before?:string)=>Promise<ChatPage>;send:(profile:ProfileId,draft:ChatDraft)=>Promise<string>;read:(profile:ProfileId,lastId:string)=>Promise<string>;watch:(changed:()=>void)=>()=>void;}
+export interface ChatRepository {action?:(profile:ProfileId,action:'remind'|'unremind'|'delete'|'readReminders',id?:string,ids?:string[])=>Promise<ChatMessage|null>;page:(profile:ProfileId,before?:string,mode?:'chat'|'reminders')=>Promise<ChatPage>;send:(profile:ProfileId,draft:ChatDraft)=>Promise<string>;read:(profile:ProfileId,lastId:string)=>Promise<string>;watch:(changed:()=>void)=>()=>void;}
 export interface WorkspaceRepository {
  presence?:PresenceRepository;
  chat?:ChatRepository;
