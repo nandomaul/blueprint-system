@@ -1,3 +1,17 @@
+# Canvas Blueprint — MAP-021
+
+Chat terhapus menampilkan penanda saja: body lama, mention, kartu referensi, reply, gambar dan reminder tidak dirender. Penanda penghapusan mengalahkan respons halaman lama yang datang terlambat. Link HTTP/HTTPS dan www pada pesan bisa diklik dengan aman sebagai teks React.
+
+Retry chat mempertahankan riwayat yang sudah dimuat. Kegagalan satu lampiran tidak lagi menggagalkan seluruh halaman pesan; tampil placeholder dengan Coba lagi. Pesan sebelumnya tetap bisa dimuat per50. Indikator memuat dibedakan dari chat kosong. Tidak ada reset data, ruang, sesi atau penyimpanan; repository Supabase tetap sama.
+
+Delapan stiker robot original ber-alpha: OK, NICE, GO IT, PLEASE, MAKE SURE, CHECK IT, HERE, +1. Dipilih ke draft sebelum dikirim melalui lampiran private Storage/RPC MAP017 yang sudah ada; tidak perlu kolom/schema baru. PNG versi1 tersedia di public/stickers/v1, dimuat saat picker/pilihan dibuka.
+
+SQL baru hanya SELECT hitungan/tanggal chat per workspace: supabase/manual/blueprint-chat-check-MAP-021.sql. Seluruh migrasi/SQL terdahulu dipertahankan. Supabase online tidak diakses; status riwayat produksi belum disimpulkan. Gemini free/Flash-Lite ditinjau dari dokumentasi Google; AI aplikasi tetap simulasi sampai backend/key dikonfigurasi pengguna.
+
+[Panduan pemasangan, SQL, sumber dan Gemini](docs/MAP-021.md). Dev dahulu; patch tidak menjalankan SQL atau deploy.
+
+## Catatan versi sebelumnya
+
 # Canvas Blueprint — MAP-020
 
 Preview tidak lagi tertutup canvas Design UI yang belum diisi. System UI tetap terlihat sampai visual tersedia; halaman kosong diberi keterangan. Snapshot lama diproyeksikan untuk preview tanpa mengubah dokumen. Kegagalan render diisolasi dengan Coba lagi/detail error sehingga editor/draft tetap terbuka. Dialog mempunyai fallback jika API modal browser tidak tersedia.

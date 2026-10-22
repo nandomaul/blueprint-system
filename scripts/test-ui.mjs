@@ -6,6 +6,8 @@ import path from 'node:path';
 import {IDBFactory} from 'fake-indexeddb';
 import {File} from 'node:buffer';
 process.env.NODE_ENV='development';
+let suiteCompleted=false;
+process.on('exit',code=>{if(code===0&&!suiteCompleted){process.stderr.write('UI DOM suite exited before its completion sentinel.\n');process.exitCode=1;}});
 const dir=await mkdtemp(path.join(process.cwd(),'.ui-test-'));
 try {
  await build({configFile:false,logLevel:'error',ssr:{external:['react','react-dom/client','react/jsx-runtime']},build:{ssr:'tests/uiHarness.tsx',outDir:dir,emptyOutDir:true,minify:false,rollupOptions:{output:{entryFileNames:'harness.mjs'}}}});
@@ -24,5 +26,5 @@ try {
  // Keep the process alive until the complete asynchronous harness resolves; a partial run must never exit successfully.
  let watchdog;const deadline=new Promise((_,reject)=>{watchdog=setTimeout(()=>reject(new Error('UI DOM suite exceeded 120 seconds before completion.')),120000);});
  try{await Promise.race([runUiTests(()=>downloads),deadline]);}finally{clearTimeout(watchdog);}
- dom.window.close();console.log('UI DOM: create system/page, edit preview, button navigation, image deletion, profile, autosave reload, History and download passed.');
+ dom.window.close();suiteCompleted=true;console.log('UI DOM: create system/page, edit preview, button navigation, image deletion, profile, autosave reload, History and download passed.');
 }finally{await rm(dir,{recursive:true,force:true});}

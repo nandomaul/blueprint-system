@@ -24,3 +24,13 @@
 .editor-page-link{display:block;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #eee8f3}
 
 @media(max-width:700px){.workspace-main.chat-is-open{padding-right:0}.team-chat{width:100%;max-width:100%}}
+
+/* MAP-021: readable links, recoverable attachments and a compact sticker palette. */
+.chat-bubble>p a{color:#594496;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.chat-image-unavailable{display:flex;align-items:center;gap:8px;padding:10px;min-height:64px;border:1px dashed #d9cce7;border-radius:8px;background:#faf8fc;font-size:11px}
+.chat-image-unavailable>span{min-width:0;flex:1;overflow-wrap:anywhere}.chat-image-unavailable small{display:block;color:#94879e;margin-top:4px;font-size:10px}.chat-image-unavailable .text-button{font-size:10px}
+.chat-sticker-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px;max-height:230px;overflow:auto;border:1px solid #eee5f5;border-radius:10px;margin:8px 0;background:#faf8fc}
+.chat-sticker-picker>button{display:flex;min-width:0;flex-direction:column;align-items:center;gap:4px;background:transparent;border:0;border-radius:8px;padding:4px;font-size:9px;color:#756080;cursor:pointer}.chat-sticker-picker>button:hover{background:#eee6f8}.chat-sticker-picker img{display:block;width:100%;aspect-ratio:1;object-fit:contain}.chat-sticker-picker>button:focus-visible{outline:2px solid #9270bb}
+.chat-bubble.is-sticker{background:transparent!important;border-color:transparent!important;box-shadow:none}.chat-bubble.is-sticker .chat-image-grid>a{background:transparent}.chat-bubble.is-sticker .chat-image-grid img{width:180px;max-width:100%;height:180px;object-fit:contain;background:transparent;border:0;border-radius:0}.chat-bubble.is-sticker>time{display:block}
+@media(max-width:400px){.chat-sticker-picker{grid-template-columns:repeat(4,minmax(0,1fr));max-height:205px}}
+.chat-bubble.is-sticker .chat-image-grid{display:block}

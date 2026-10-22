@@ -1,12 +1,23 @@
 import type {SupabaseClient} from '@supabase/supabase-js';
-import {ChatMessageSchema,ChatPageSchema,CursorSchema,ChatAttachmentSchema} from '../domain/chat.ts';
+import {visibleMessage,ChatMessageSchema,ChatPageSchema,CursorSchema,ChatAttachmentSchema} from '../domain/chat.ts';
 import type {ChatAttachment,ChatMessage,DraftImage} from '../domain/chat.ts';
 import {bytesOf,digest,dataUrl} from './assetCodec.ts';
 import type {ChatRepository} from './workspace.ts';
 import {rpc} from './supabaseRepository.ts';
 export function cloudChat(client:SupabaseClient,workspaceId:string):ChatRepository{
  const cache=new Map<string,string>();
- async function hydrate(message:ChatMessage):Promise<ChatMessage>{const attachments:ChatAttachment[]=[];for(const ref of message.attachments??[]){if(!ref.storagePath.startsWith(workspaceId+'/'))throw new Error('Gambar chat berbeda ruang.');let data=cache.get(ref.storagePath);if(!data){const r=await client.storage.from('blueprint-designs').download(ref.storagePath);if(r.error)throw new Error(r.error.message);const bytes=new Uint8Array(await r.data.arrayBuffer());if(bytes.length!==ref.size||await digest(bytes)!==ref.sha256)throw new Error('Gambar chat gagal diverifikasi.');data=dataUrl(bytes,ref.mime);if(cache.size>=160)cache.delete(cache.keys().next().value!);cache.set(ref.storagePath,data);}attachments.push({...ref,data});}return{...message,attachments};}
+ async function hydrate(raw:ChatMessage):Promise<ChatMessage>{
+  const message=visibleMessage(raw);if(message.deletedAt)return message;
+  const attachments:ChatAttachment[]=[];
+  for(const ref of message.attachments??[]){
+   try{
+    if(!ref.storagePath.startsWith(workspaceId+'/'))throw new Error('Gambar chat berbeda ruang.');
+    let data=cache.get(ref.storagePath);if(!data){const r=await client.storage.from('blueprint-designs').download(ref.storagePath);if(r.error)throw new Error(r.error.message);const bytes=new Uint8Array(await r.data.arrayBuffer());if(bytes.length!==ref.size||await digest(bytes)!==ref.sha256)throw new Error('Gambar chat gagal diverifikasi.');data=dataUrl(bytes,ref.mime);if(cache.size>=160)cache.delete(cache.keys().next().value!);cache.set(ref.storagePath,data);}
+    attachments.push({...ref,data});
+   }catch{const unavailable={...ref};delete unavailable.data;attachments.push(unavailable);}
+  }
+  return{...message,attachments};
+ }
  async function upload(asset:DraftImage){const bytes=bytesOf(asset),sha256=await digest(bytes),ext=asset.mime==='image/png'?'png':asset.mime==='image/jpeg'?'jpg':'webp',storagePath=`${workspaceId}/${sha256}.${ext}`;const {data,error}=await client.from('bp_assets').select('storage_path,sha256').eq('workspace_id',workspaceId).eq('asset_id',asset.id).maybeSingle();if(error)throw new Error(error.message);if(data){if(data.storage_path!==storagePath||data.sha256!==sha256)throw new Error('ID gambar sudah dipakai.');}else{const r=await client.storage.from('blueprint-designs').upload(storagePath,bytes,{contentType:asset.mime,upsert:false});if(r.error&&!['409','Duplicate'].includes(String(r.error.statusCode))&&!/already exists|duplicate/i.test(r.error.message))throw new Error(r.error.message);await rpc(client,'bp_register_asset',{p_workspace_id:workspaceId,p_asset_id:asset.id,p_path:storagePath,p_sha256:sha256});}cache.set(storagePath,asset.data);return ChatAttachmentSchema.omit({data:true}).parse({storagePath,sha256,id:asset.id,name:asset.name,mime:asset.mime,size:asset.size});}
  return{
  async page(profile,before,mode='chat'){const page=ChatPageSchema.parse(await rpc(client,'bp_chat_page_v17',{p_workspace_id:workspaceId,p_profile:profile,p_before:before??null,p_mode:mode}));return{...page,messages:await Promise.all(page.messages.map(hydrate)),reminders:await Promise.all((page.reminders??[]).map(hydrate))};},

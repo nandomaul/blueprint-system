@@ -1,3 +1,4 @@
+import {runChatContinuityUiTests} from './chatContinuityUiHarness.tsx';
 import {runPreviewUiTests} from './previewUiHarness.tsx';
 import {runPrecisionUiTests} from './precisionUiHarness.tsx';
 import {runRichChatUiTests} from './richChatUiHarness.tsx';
@@ -21,7 +22,7 @@ import {runWorkspaceUiTests} from './workspaceUiHarness.tsx';
 import {runRyanUiTests} from './ryanUiHarness.tsx';
 const pause=(ms=0)=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function runUiTests(downloads:()=>number){
- await runPreviewUiTests();await runPrecisionUiTests();await runEditorToolsUiTests();await runRichChatUiTests();
+ await runChatContinuityUiTests();await runPreviewUiTests();await runPrecisionUiTests();await runEditorToolsUiTests();await runRichChatUiTests();
  let root=createRoot(document.getElementById('test-root')!);
  async function until(test:()=>boolean){for(let i=0;i<120;i++){await act(async()=>{await pause(25);});if(test())return;}throw new Error('DOM wait timeout: '+document.body.textContent?.slice(-1000));}
  const button=(text:string)=>{const dialogs=[...document.querySelectorAll('dialog[open]')],scope=dialogs.at(-1)??document;const result=[...scope.querySelectorAll<Element>('button,[role=button]')].find(b=>b.textContent?.trim()===text||b.getAttribute('aria-label')===text);assert.ok(result,'Button missing: '+text);return result;};

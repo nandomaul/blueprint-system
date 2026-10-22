@@ -1,4 +1,6 @@
 export const english:Record<string,string>={
+ 'Memuat riwayat…':'Loading history…','Chat belum terhubung.':'Chat is not connected.','Gambar belum dapat dimuat':'Image could not be loaded','Daftar stiker':'Stickers','Pilih stiker ':'Select sticker ','Memuat stiker…':'Loading sticker…','Stiker belum dapat dimuat. Coba lagi.':'Sticker could not be loaded. Try again.',
+
  " item": " items",
  " objek": " objects",
  "+ Kolom tabel": "+ Table column",

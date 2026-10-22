@@ -11,4 +11,6 @@ export type ChatMessage=z.infer<typeof ChatMessageSchema>;
 export const ChatPageSchema=z.object({messages:z.array(ChatMessageSchema).max(50),lastRead:CursorSchema,unread:z.number().int().nonnegative(),hasMore:z.boolean(),reminders:z.array(ChatMessageSchema).max(50).optional(),unreadReminders:z.number().int().nonnegative().optional(),hasMoreReminders:z.boolean().optional()}).strict();
 export type ChatPage=z.infer<typeof ChatPageSchema>;
 export type ChatDraft={clientId:string;body:string;kind:'chat'|'note';context:ChatTarget|null;mentions:string[];attachments?:DraftImage[];replyTo?:string|null};
-export function mergeMessages(old:ChatMessage[],incoming:ChatMessage[]){return [...new Map([...old,...incoming].map(m=>[m.id,m])).values()].sort((a,b)=>BigInt(a.id)<BigInt(b.id)?-1:1);}
+// Tombstones win over stale in-flight pages. Deleted content never reaches the UI/hydrator.
+export function visibleMessage(m:ChatMessage):ChatMessage{return m.deletedAt?{...m,body:'',context:null,mentions:[],attachments:[],replyTo:null,reply:null,canDelete:false,reminder:null,reminderUnread:false}:m;}
+export function mergeMessages(old:ChatMessage[],incoming:ChatMessage[]){const rows=new Map(old.map(m=>[m.id,visibleMessage(m)]));for(const m of incoming){const previous=rows.get(m.id);rows.set(m.id,visibleMessage(previous?.deletedAt&&!m.deletedAt?previous:m));}return [...rows.values()].sort((a,b)=>BigInt(a.id)<BigInt(b.id)?-1:BigInt(a.id)>BigInt(b.id)?1:0);}
